@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/jquery.mobile-1.3.2.min.css">
+		<script src="js/jquery-1.8.3.min.js"></script>
+		<script src="js/jquery.mobile-1.3.2.min.js"></script>
+		<script type="text/javascript"
+		src="https://maps.googleapis.com/maps/api/js?libraries=places&sensor=false&v=3.exp"></script>
+		<script type="text/javascript" src="js/maps.js"></script>
+
+		<title>Metro</title>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+
+		<meta charset="utf-8">
+		<style>
+			#content {
+				padding: 0;
+				position: absolute !important;
+				right: 0;
+				width: 100% !important;
+				left: 0 !important;
+			}
+
+			html, body, #map-canvas {
+				height: 100%;
+				width: 100% !important;
+				margin: 0px;
+				padding: 0px
+			}
+			.controls {
+				margin-top: 96px;
+				border: 1px solid transparent;
+				border-radius: 2px 0 0 2px;
+				box-sizing: border-box;
+				-moz-box-sizing: border-box;
+				height: 32px;
+				width: 200px;
+				outline: none;
+				box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+			}
+      #pac-input-start {
+        background-color: #fff;
+        padding: 0 11px 0 13px;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        text-overflow: ellipsis;
+      }
+
+      #pac-input-start:focus {
+        border-color: #4d90fe;
+        margin-left: -1px;
+        padding-left: 14px;  /* Regular padding-left + 1. */
+      }
+
+      #pac-input-dest {
+        background-color: #fff;
+        padding: 0 11px 0 13px;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        text-overflow: ellipsis;
+      }
+
+      #pac-input-dest:focus {
+        border-color: #4d90fe;
+        margin-left: -1px;
+        padding-left: 14px;  /* Regular padding-left + 1. */
+      }
+      .pac-container {
+        font-family: Roboto;
+      }
+			#type-selector {
+				color: #fff;
+				background-color: #4d90fe;
+				padding: 5px 11px 0px 11px;
+			}
+
+			#type-selector label {
+				font-family: Roboto;
+				font-size: 13px;
+				font-weight: 300;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<div data-role="page" id="mainPage" >
+			<div data-role="panel" id="popupPanel" data-display="overlay" class="ui-body-a"    data-theme="b" data-shadow="true" data-tolerance="0,0">
+			    <a href="#popupPanel"  id="triggerclose" class="trigger left" data-role="button" data-theme="b">Hide  </a>
+	</br>
+				<ul data-role="listview" id="route-list"  ></ul>
+				
+			</div>
+			<div data-role="content" style="width:100%; padding: 0; position : absolute; top :0px ;  right : 0; bottom :0px ;  left : 0 ;   " >
+
+				<div id="map-canvas" ></div>
+
+			</div>
+
+			<a id="startbutton" data-role="button" href="#startPage" data-rel="dialog" data-theme="b">Staring Point</a>
+
+			<a id="destbutton" data-role="button" href="#destPage" data-rel="dialog" data-theme="b" >Destination</a>
+			<a id="detailsbutton" data-role="button" data-theme="b" >Route</a>
+
+		</div>
+
+		<div align="center" data-role="dialog" id="startPage" >
+
+			<div data-role="fieldcontain" >
+				<fieldset data-role="controlgroup"  class="radiobutton">
+
+					<input type="radio" name="start-radio" id="radio-choice-1" value="choice-1" checked="checked"  />
+					<label for="radio-choice-1">Station</label>
+
+					<input type="radio" name="start-radio" id="radio-choice-2" value="choice-2"  />
+					<label for="radio-choice-2">Search</label>
+
+					<input type="radio" name="start-radio" id="radio-choice-3" value="choice-3"  />
+					<label for="radio-choice-3">My Location</label>
+				</fieldset>
+			</div>
+
+			<div id="startstationsdiv">
+				<ul data-role="listview" data-filter-reveal="true" data-filter="true" data-inset="true" id="stations-start" data-filter-placeholder="Choose First Station" ></ul>
+				
+			</div>
+			<div id="startsearchdiv" style = "display:none;" >
+				<input id="pac-input-start" class="controls" type="text" placeholder="Starting Points">
+			</div>
+			</br>
+					<label id="startstationlabel" style="color: white; text-shadow: 0"></label>
+			<a  data-role="button"  id="setstartbutton" data-theme="b">Apply</a>
+
+		</div>
+		<div align="center" data-role="dialog" id="destPage" >
+			<div data-role="fieldcontain">
+				<fieldset data-role="controlgroup" >
+					<input  type="radio" name="destination-radio" id="radio-choice-1" value="choice-1" checked="checked" />
+					<label for="radio-choice-1">Station</label>
+					<input type="radio" name="destination-radio" id="radio-choice-2" value="choice-2"  />
+					<label for="radio-choice-2">Search</label>
+				</fieldset>
+			</div>
+			<div id="destinationsearchdiv" style = "display:none;">
+				<input id="pac-input-dest" class="controls" type="text" placeholder="Destination">
+			</div>
+			<div id="destinationstationsdiv" >
+				<ul data-role="listview" data-filter-reveal="true" data-filter="true" data-inset="true"  id="stations-dest"></ul>
+			</div>
+			</br>
+					<label id="deststationlabel" style="color: white; text-shadow: 0"></label>
+			<a  data-role="button"  data-theme="b" id="setdestbutton" >Apply</a>
+		</div>
+
+	</body>
+</html>
+
