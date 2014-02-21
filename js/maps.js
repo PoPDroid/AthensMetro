@@ -16,6 +16,7 @@ var endstation;
 var maxstops = 2;
 var stationnames = [];
 var mingroupedroute;
+var mylocation= false;
 
 var inputstart;
 var inputdest;
@@ -81,7 +82,7 @@ function initialize() {
 	});
 	google.maps.event.trigger(map, 'resize');
 
-	getLocation();
+	//getLocation();
 
 	var imagestart = 'images/start.png';
 	var imagestop = 'images/stop.png';
@@ -153,12 +154,15 @@ function initialize() {
 		if (this.value == "choice-1") {
 			$("#startstationsdiv").show();
 			$("#startstationlabel").show();
+			mylocation=false;
 		} else if (this.value == "choice-2") {
 			$("#startstationsdiv").hide();
 			$("#startstationlabel").hide();
+			mylocation=false;
 		} else if (this.value == "choice-3") {
 			$("#startstationsdiv").hide();
 			$("#startstationlabel").hide();
+			mylocation = true;
 		}
 	});
 
@@ -200,35 +204,7 @@ function initialize() {
 	});
 }
 
-function setStartType(sel) {
-	if (sel.value == "location-start") {
-		touchoption = "none";
 
-		$("#startsearchdiv").hide();
-
-	} else if (sel.value == "search-start") {
-		touchoption = "none";
-
-	} else if (sel.value == "touch-start") {
-		touchoption = "start";
-
-	} else if (sel.value == "station-start") {
-		touchoption = "none";
-	}
-}
-
-function setDestType(sel) {
-	if (sel.value == "search-destination") {
-		touchoption = "none";
-
-	} else if (sel.value == "touch-destination") {
-		touchoption = "destination";
-
-	} else if (sel.value == "station-destination") {
-		touchoption = "none";
-
-	}
-}
 
 function searchBox() {
 	// Create the search box and link it to the UI element.
@@ -292,7 +268,9 @@ function searchBox() {
 }
 
 function goToMap() {
-
+	if (mylocation){
+		getLocation();
+	}
 	$(".ui-dialog").dialog("close");
 	//drawShortestRoute(startstation, endstation);
 
@@ -718,13 +696,17 @@ function getLocation() {
 	} else {
 		x.innerHTML = "Geolocation is not supported by this browser.";
 	}
+	mylocation=false;
 }
 
 function showPosition(position) {
 	startgpsposition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-	//alert(startgpsposition);
-	//map.panTo(startmyposition);
-	//map.setZoom(16);
+
+		startmarker.setPosition(startgpsposition);
+		startstation = closeststation(startgpsposition);
+		if (endstation.stationid != "none")
+			drawShortestRoute(startstation, endstation);
+	mylocation=false;
 }
 
 function onError(error) {
