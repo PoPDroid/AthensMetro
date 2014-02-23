@@ -16,8 +16,8 @@ var endstation;
 var maxstops = 2;
 var stationnames = [];
 var mingroupedroute;
-var mylocation= false;
-
+var mylocation = false;
+var searching =false;
 var inputstart;
 var inputdest;
 
@@ -154,15 +154,23 @@ function initialize() {
 		if (this.value == "choice-1") {
 			$("#startstationsdiv").show();
 			$("#startstationlabel").show();
-			mylocation=false;
+			//$("#setstartbutton").text("Set Start Station");
+			searching=false;
+			mylocation = false;
+		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
 		} else if (this.value == "choice-2") {
 			$("#startstationsdiv").hide();
 			$("#startstationlabel").hide();
-			mylocation=false;
+			//$("#setstartbutton").text("Add Search Bar");
+			searching=true;
+			mylocation = false;
 		} else if (this.value == "choice-3") {
 			$("#startstationsdiv").hide();
 			$("#startstationlabel").hide();
+			//$("#setstartbutton").text("Set Current Location");
+			searching=false;
 			mylocation = true;
+		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
 		}
 	});
 
@@ -170,10 +178,13 @@ function initialize() {
 
 		if (this.value == "choice-1") {
 			$("#deststationlabel").show();
-			$("#destinationstationsdiv").show();
+			$("#destinationstationsdiv").show();;
+			searching=false;
+		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputdest);
 		} else if (this.value == "choice-2") {
 			$("#deststationlabel").hide();
-			$("#destinationstationsdiv").hide();
+			$("#destinationstationsdiv").hide();;
+			searching=true;
 		}
 	});
 
@@ -204,8 +215,6 @@ function initialize() {
 	});
 }
 
-
-
 function searchBox() {
 	// Create the search box and link it to the UI element.
 	inputstart = (document.getElementById('pac-input-start'));
@@ -233,6 +242,7 @@ function searchBox() {
 	var searchBoxDest = new google.maps.places.SearchBox((inputdest));
 	google.maps.event.addListener(searchBoxStart, 'places_changed', function() {
 		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
+		searching = false;
 		$("#startsearchdiv").hide();
 		var places = searchBoxStart.getPlaces();
 		startmarker.setPosition(places[0].geometry.location);
@@ -268,7 +278,7 @@ function searchBox() {
 }
 
 function goToMap() {
-	if (mylocation){
+	if (mylocation) {
 		getLocation();
 	}
 	$(".ui-dialog").dialog("close");
@@ -284,6 +294,7 @@ function setStartStation(stationid) {
 	$('input[data-type="search"]').val("");
 	$('input[data-type="search"]').trigger("keyup");
 	$("#startstationlabel").text(startstation.name);
+	
 }
 
 function setEndStation(stationid) {
@@ -355,8 +366,9 @@ function zoom(fitstations) {
 }
 
 function drawShortestRoute(ss, es) {
-
-	clearOverlays(); mingroupedroute;
+	$("#detailsbutton").show();
+	clearOverlays();
+	mingroupedroute;
 	$('#route-list').empty();
 	var mintime = -1;
 	var time = 0;
@@ -370,26 +382,29 @@ function drawShortestRoute(ss, es) {
 		}
 	};
 	var zoomstations = [];
-					$('#route-list').append("<li data-theme='b'>Number of interchanges: " + (mingroupedroute.routes.length - 1)+ "</li>").listview('refresh');
-					$('#route-list').append("<li data-theme='c'></li>").listview('refresh');
-
+	$('#route-list').append("<li data-theme='c'></li>").listview('refresh');
 	$.each(mingroupedroute.routes, function() {
 		drawroute(this);
 		$.each(this.stations, function() {
 			zoomstations.push(this);
 		});
 	});
+	$('#route-list').append("<li data-theme='c'></li>").listview('refresh');
+		$('#route-list').append("<li data-theme='c'></li>").listview('refresh');
+	$('#route-list').append("<li data-theme='b' style='text-align: center;'>Number of interchanges: " + (mingroupedroute.routes.length - 1) + "</li>").listview('refresh');
 
 	zoom(zoomstations);
+	if(!searching)
+	$.mobile.activePage.find('#popupPanel').panel("open");
 	//alert("Duration: " + mintime + " \r\nStops: " + (mingroupedroute.routes.length-1));
 }
 
 function drawroute(route) {
 
 	var polyOptions = {
-		strokeColor : "#FFFF00",
-		strokeOpacity : 0.4,
-		strokeWeight : 14
+		strokeColor : "#FFFFFF",
+		strokeOpacity : 1,
+		strokeWeight : 4,
 	};
 
 	var poly = new google.maps.Polyline(polyOptions);
@@ -403,20 +418,29 @@ function drawroute(route) {
 
 		if (this == startstation || curr == 0 || this == endstation) {
 
+			var stats = route.stations.length - 2;
+			if (stats == -1)
+				stats = 0;
 			var iconimage = 'images/metro.png';
 			if (this == startstation) {
 				iconimage = 'images/metrostart.png';
-				$('#route-list').append("<li data-theme='b' style='text-align: center;'>Start</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='a'style='text-align: center;'>" + this.name + "</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='d' style='text-align: center;'>(" + (route.stations.length-1)+" stations)</li>").listview('refresh');
+				//$('#route-list').append("<li data-theme='b' style='text-align: center;'>Start</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a'style='text-align: center;'>Start from: " + this.name + "</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='d' style='text-align: center;'>(Pass " + stats + " stations)</li>").listview('refresh');
 			} else if (this == endstation) {
+				iconimage = 'images/metrodest.png';
+				$('#route-list').append("<li data-theme='a' style='text-align: center;'>Destination: " + this.name + "</li>").listview('refresh');
+				//$('#route-list').append("<li data-theme='b'style='text-align: center;'>Destination</li>").listview('refresh');
+			} else if (curr == 0 && this != endstation && this != startstation) {
+				iconimage = 'images/metro.png';
+				$('#route-list').append("<li data-theme='a' style='text-align: center;'>Change at: " + this.name + "</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='d' style='text-align: center;' >(Pass " + stats + " stations)</li>").listview('refresh');
+			}
+			if (startstation == endstation) {
 				iconimage = 'images/metrodest.png';
 				$('#route-list').append("<li data-theme='a' style='text-align: center;'>" + this.name + "</li>").listview('refresh');
 				$('#route-list').append("<li data-theme='b'style='text-align: center;'>Destination</li>").listview('refresh');
-			} else if (curr == 0 && this != endstation && this != startstation) {
-				iconimage = 'images/metro.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;'>" + this.name + "</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='d' style='text-align: center;' >(" + (route.stations.length-1)+" stations)</li>").listview('refresh');
+
 			}
 			var marker = new google.maps.Marker({
 				position : new google.maps.LatLng(this.lat, this.lon),
@@ -431,8 +455,46 @@ function drawroute(route) {
 			});
 
 		}
+
+		var marker = new google.maps.Marker({
+			position : new google.maps.LatLng(this.lat, this.lon),
+			title : this.name,
+			icon : {
+				path : google.maps.SymbolPath.CIRCLE,
+				scale : 7,
+				strokeColor : "#000000"
+			},
+			map : map
+		});
+		markers.push(marker);
+
+		// Listen for click event
+		google.maps.event.addListener(marker, 'click', function() {
+			onItemClick(event, marker);
+		});
 		curr++;
 	});
+}
+
+function getCommonRoutesColour(stats) {
+	var route1count = 0;
+	var route2count = 0;
+	var route3count = 0;
+	$.each(stats, function() {
+		$.each(this.routes, function() {
+
+			if (this.name == "Route 1") {
+				route1count++;
+			} else if (this.name == "Route 2") {
+				route2count++;
+			} else if (this.name == "Route 3") {
+				route3count++;
+			}
+		});
+	});
+	//????
+	//get max col
+
 }
 
 function drawrfixedroutes(routes) {
@@ -448,8 +510,8 @@ function drawrfixedroutes(routes) {
 		}
 		var polyOptions = {
 			strokeColor : colour,
-			strokeOpacity : 0.7,
-			strokeWeight : 4
+			strokeOpacity : 0.5,
+			strokeWeight : 12
 		};
 		var poly = new google.maps.Polyline(polyOptions);
 		poly.setMap(map);
@@ -696,17 +758,17 @@ function getLocation() {
 	} else {
 		x.innerHTML = "Geolocation is not supported by this browser.";
 	}
-	mylocation=false;
+	mylocation = false;
 }
 
 function showPosition(position) {
 	startgpsposition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 
-		startmarker.setPosition(startgpsposition);
-		startstation = closeststation(startgpsposition);
-		if (endstation.stationid != "none")
-			drawShortestRoute(startstation, endstation);
-	mylocation=false;
+	startmarker.setPosition(startgpsposition);
+	startstation = closeststation(startgpsposition);
+	if (endstation.stationid != "none")
+		drawShortestRoute(startstation, endstation);
+	mylocation = false;
 }
 
 function onError(error) {
@@ -846,19 +908,15 @@ $(document).ready(function() {
 	populateListViews();
 });
 
-
 function loadScript() {
-	if(window.navigator.onLine)
-	{
-  var script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.src = 'https://maps.googleapis.com/maps/api/js?libraries=places&sensor=false&v=3.exp&' +
-      'callback=initialize';
-  document.body.appendChild(script);
-		
-	}
-	else
-	alert("offline");
+	if (window.navigator.onLine) {
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.src = 'https://maps.googleapis.com/maps/api/js?libraries=places&sensor=false&v=3.exp&' + 'callback=initialize';
+		document.body.appendChild(script);
+
+	} else
+		alert("offline");
 }
 
-window.onload = loadScript;
+window.onload = loadScript; 
