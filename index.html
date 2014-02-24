@@ -39,38 +39,38 @@
 				outline: none;
 				box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 			}
-      #pac-input-start {
-        background-color: #fff;
-        padding: 0 11px 0 13px;
-        font-family: Roboto;
-        font-size: 15px;
-        font-weight: 300;
-        text-overflow: ellipsis;
-      }
+			#pac-input-start {
+				background-color: #fff;
+				padding: 0 11px 0 13px;
+				font-family: Roboto;
+				font-size: 15px;
+				font-weight: 300;
+				text-overflow: ellipsis;
+			}
 
-      #pac-input-start:focus {
-        border-color: #4d90fe;
-        margin-left: -1px;
-        padding-left: 14px;  /* Regular padding-left + 1. */
-      }
+			#pac-input-start:focus {
+				border-color: #4d90fe;
+				margin-left: -1px;
+				padding-left: 14px; /* Regular padding-left + 1. */
+			}
 
-      #pac-input-dest {
-        background-color: #fff;
-        padding: 0 11px 0 13px;
-        font-family: Roboto;
-        font-size: 15px;
-        font-weight: 300;
-        text-overflow: ellipsis;
-      }
+			#pac-input-dest {
+				background-color: #fff;
+				padding: 0 11px 0 13px;
+				font-family: Roboto;
+				font-size: 15px;
+				font-weight: 300;
+				text-overflow: ellipsis;
+			}
 
-      #pac-input-dest:focus {
-        border-color: #4d90fe;
-        margin-left: -1px;
-        padding-left: 14px;  /* Regular padding-left + 1. */
-      }
-      .pac-container {
-        font-family: Roboto;
-      }
+			#pac-input-dest:focus {
+				border-color: #4d90fe;
+				margin-left: -1px;
+				padding-left: 14px; /* Regular padding-left + 1. */
+			}
+			.pac-container {
+				font-family: Roboto;
+			}
 			#type-selector {
 				color: #fff;
 				background-color: #4d90fe;
@@ -88,11 +88,65 @@
 	<body>
 
 		<div data-role="page" id="mainPage" >
+			<div align="center" data-role="popup" id="startPage" >
+
+				<div data-role="fieldcontain" >
+					<fieldset data-role="controlgroup" data-type="horizontal" class="radiobutton">
+
+						<input type="radio" name="start-radio" id="radio-choice-1" value="choice-1" checked="checked"  />
+						<label for="radio-choice-1">Station</label>
+
+						<input type="radio" name="start-radio" id="radio-choice-2" value="choice-2"  />
+						<label for="radio-choice-2">Search</label>
+
+						<input type="radio" name="start-radio" id="radio-choice-3" value="choice-3"  />
+						<label for="radio-choice-3">My Location</label>
+					</fieldset>
+				</div>
+
+				<div id="startstationsdiv">
+					<ul data-role="listview" data-filter-reveal="true" data-filter="true" data-inset="true" id="stations-start" data-filter-placeholder="Enter Station Name" ></ul>
+
+				</div>
+				<div id="startsearchdiv" style = "display:none;" >
+					<input id="pac-input-start" class="controls" type="text" placeholder="Starting Points">
+				</div>
+				</br>
+				<label id="startstationlabel" style="color: white; text-shadow: 0"></label>
+
+				<div id="setstartbuttondiv" style = "display:none;" >
+					<a  data-role="button"  id="setstartbutton" data-theme="b" >Apply</a>
+				</div>
+
+			</div>
+			<div align="center" data-role="popup" id="destPage" >
+				<div data-role="fieldcontain">
+					<fieldset data-role="controlgroup" data-type="horizontal" class="radiobutton">
+						<input  type="radio" name="destination-radio" id="radio-choice-1" value="choice-1" checked="checked" />
+						<label for="radio-choice-1">Station</label>
+						<input type="radio" name="destination-radio" id="radio-choice-2" value="choice-2"  />
+						<label for="radio-choice-2">Search</label>
+					</fieldset>
+				</div>
+				<div id="destinationsearchdiv" style = "display:none;">
+					<input id="pac-input-dest" class="controls" type="text" placeholder="Destination">
+				</div>
+				<div id="destinationstationsdiv" >
+					<ul data-role="listview" data-filter-reveal="true" data-filter="true" data-inset="true"  id="stations-dest" data-filter-placeholder="Enter Station Name"></ul>
+				</div>
+				</br>
+				<label id="deststationlabel" style="color: white; text-shadow: 0"></label>
+
+				<div id="setdestbuttondiv" style = "display:none;" >
+					<a  data-role="button"  data-theme="b" id="setdestbutton">Apply</a>
+				</div>
+			</div>
+
 			<div data-role="panel" id="popupPanel" data-display="overlay" class="ui-body-a"    data-theme="b" data-shadow="true" data-tolerance="0,0">
-			    <a href="#popupPanel"  id="triggerclose" class="trigger left" data-role="button" data-theme="b"  data-icon="arrow-l">Hide</a>
-	</br>
+				<a href="#popupPanel"  id="triggerclose" class="trigger left" data-role="button" data-theme="b"  data-icon="arrow-l">Hide</a>
+				</br>
 				<ul data-role="listview" id="route-list"  ></ul>
-				
+
 			</div>
 			<div data-role="content" style="width:100%; padding: 0; position : absolute; top :0px ;  right : 0; bottom :0px ;  left : 0 ;   " >
 
@@ -100,61 +154,11 @@
 
 			</div>
 
-			<a id="startbutton" data-role="button" href="#startPage" data-rel="dialog" data-theme="b">Staring Point</a>
+			<a id="startbutton" data-role="button" href="#startPage" data-rel="popup" data-theme="b">Staring Point</a>
 
-			<a id="destbutton" data-role="button" href="#destPage" data-rel="dialog" data-theme="b" >Destination</a>
+			<a id="destbutton" data-role="button" href="#destPage" data-rel="popup" data-theme="b" >Destination</a>
 			<a id="detailsbutton" data-role="button" data-theme="b"  data-icon="arrow-r" style = "display:none;">Show Route</a>
 
-		</div>
-
-		<div align="center" data-role="dialog" id="startPage" >
-
-			<div data-role="fieldcontain" >
-				<fieldset data-role="controlgroup" data-type="horizontal" class="radiobutton">
-
-					<input type="radio" name="start-radio" id="radio-choice-1" value="choice-1" checked="checked"  />
-					<label for="radio-choice-1">Station</label>
-
-					<input type="radio" name="start-radio" id="radio-choice-2" value="choice-2"  />
-					<label for="radio-choice-2">Search</label>
-
-					<input type="radio" name="start-radio" id="radio-choice-3" value="choice-3"  />
-					<label for="radio-choice-3">My Location</label>
-				</fieldset>
-			</div>
-
-			</br>
-			<div id="startstationsdiv">
-				<ul data-role="listview" data-filter-reveal="true" data-filter="true" data-inset="true" id="stations-start" data-filter-placeholder="Enter Station Name" ></ul>
-				
-			</div>
-			<div id="startsearchdiv" style = "display:none;" >
-				<input id="pac-input-start" class="controls" type="text" placeholder="Starting Points">
-			</div>
-			</br>
-					<label id="startstationlabel" style="color: white; text-shadow: 0"></label>
-			<a  data-role="button"  id="setstartbutton" data-theme="b">Apply</a>
-
-		</div>
-		<div align="center" data-role="dialog" id="destPage" >
-			<div data-role="fieldcontain">
-				<fieldset data-role="controlgroup" data-type="horizontal" class="radiobutton">
-					<input  type="radio" name="destination-radio" id="radio-choice-1" value="choice-1" checked="checked" />
-					<label for="radio-choice-1">Station</label>
-					<input type="radio" name="destination-radio" id="radio-choice-2" value="choice-2"  />
-					<label for="radio-choice-2">Search</label>
-				</fieldset>
-			</div>
-			</br>
-			<div id="destinationsearchdiv" style = "display:none;">
-				<input id="pac-input-dest" class="controls" type="text" placeholder="Destination">
-			</div>
-			<div id="destinationstationsdiv" >
-				<ul data-role="listview" data-filter-reveal="true" data-filter="true" data-inset="true"  id="stations-dest" data-filter-placeholder="Enter Station Name"></ul>
-			</div>
-			</br>
-					<label id="deststationlabel" style="color: white; text-shadow: 0"></label>
-			<a  data-role="button"  data-theme="b" id="setdestbutton" >Apply</a>
 		</div>
 
 	</body>

@@ -154,23 +154,27 @@ function initialize() {
 		if (this.value == "choice-1") {
 			$("#startstationsdiv").show();
 			$("#startstationlabel").show();
+			$("#setstartbuttondiv").hide();
 			//$("#setstartbutton").text("Set Start Station");
-			searching=false;
-			mylocation = false;
-		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
+			//searching=false;
+			//mylocation = false;
+		    //map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
 		} else if (this.value == "choice-2") {
 			$("#startstationsdiv").hide();
 			$("#startstationlabel").hide();
-			//$("#setstartbutton").text("Add Search Bar");
-			searching=true;
-			mylocation = false;
+			$("#setstartbuttondiv").show();
+			//$("#setstartbuttondiv").text("Add Search Bar");
+			//searching=true;
+			//mylocation = false;
 		} else if (this.value == "choice-3") {
 			$("#startstationsdiv").hide();
 			$("#startstationlabel").hide();
+			$("#setstartbuttondiv").show();
+			
 			//$("#setstartbutton").text("Set Current Location");
-			searching=false;
-			mylocation = true;
-		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
+			//searching=false;
+			//mylocation = true;
+		//map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
 		}
 	});
 
@@ -178,13 +182,15 @@ function initialize() {
 
 		if (this.value == "choice-1") {
 			$("#deststationlabel").show();
-			$("#destinationstationsdiv").show();;
-			searching=false;
-		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputdest);
+			$("#destinationstationsdiv").show();
+			$("#setdestbuttondiv").hide();
+			//searching=false;
+		//map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputdest);
 		} else if (this.value == "choice-2") {
 			$("#deststationlabel").hide();
 			$("#destinationstationsdiv").hide();;
-			searching=true;
+			$("#setdestbuttondiv").show();
+			//searching=true;
 		}
 	});
 
@@ -198,7 +204,7 @@ function initialize() {
 			selectedVal = selected.val();
 		}
 		if (selectedVal == "choice-2") {
-			map.controls[google.maps.ControlPosition.LEFT_CENTER].push(inputstart);
+			map.controls[google.maps.ControlPosition.TOP].push(inputstart);
 			$("#startsearchdiv").show();
 		}
 	});
@@ -209,7 +215,7 @@ function initialize() {
 			selectedVal = selected.val();
 		}
 		if (selectedVal == "choice-2") {
-			map.controls[google.maps.ControlPosition.LEFT_CENTER].push(inputdest);
+			map.controls[google.maps.ControlPosition.TOP].push(inputdest);
 			$("#destinationsearchdiv").show();
 		}
 	});
@@ -224,7 +230,7 @@ function searchBox() {
 	var detailsbutton = (document.getElementById('detailsbutton'));
 
 	map.controls[google.maps.ControlPosition.RIGHT_TOP].push(startbutton);
-	map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(destbutton);
+	map.controls[google.maps.ControlPosition.RIGHT_TOP].push(destbutton);
 	map.controls[google.maps.ControlPosition.LEFT_TOP].push(detailsbutton);
 	//var startoption = (document.getElementById('select-choice-start'));
 	//var destoption = (document.getElementById('select-choice-destinatoin'));
@@ -241,7 +247,7 @@ function searchBox() {
 	var searchBoxStart = new google.maps.places.SearchBox((inputstart));
 	var searchBoxDest = new google.maps.places.SearchBox((inputdest));
 	google.maps.event.addListener(searchBoxStart, 'places_changed', function() {
-		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
+		map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
 		searching = false;
 		$("#startsearchdiv").hide();
 		var places = searchBoxStart.getPlaces();
@@ -253,7 +259,7 @@ function searchBox() {
 	});
 
 	google.maps.event.addListener(searchBoxDest, 'places_changed', function() {
-		map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputdest);
+		map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
 		$("#destsearchdiv").hide();
 		var places = searchBoxDest.getPlaces();
 		stopmarker.setPosition(places[0].geometry.location);
@@ -281,7 +287,7 @@ function goToMap() {
 	if (mylocation) {
 		getLocation();
 	}
-	$(".ui-dialog").dialog("close");
+	$(".ui-popup").popup("close");
 	//drawShortestRoute(startstation, endstation);
 
 }
@@ -293,7 +299,9 @@ function setStartStation(stationid) {
 		drawShortestRoute(startstation, endstation);
 	$('input[data-type="search"]').val("");
 	$('input[data-type="search"]').trigger("keyup");
-	$("#startstationlabel").text(startstation.name);
+	
+	$(".ui-popup").popup("close");
+	//$("#startstationlabel").text(startstation.name);
 	
 }
 
@@ -305,7 +313,8 @@ function setEndStation(stationid) {
 		drawShortestRoute(startstation, endstation);
 	$('input[data-type="search"]').val("");
 	$('input[data-type="search"]').trigger("keyup");
-	$("#deststationlabel").text(endstation.name);
+	$(".ui-popup").popup("close");
+	//$("#deststationlabel").text(endstation.name);
 }
 
 function getStationByID(stationid) {
@@ -394,8 +403,8 @@ function drawShortestRoute(ss, es) {
 	$('#route-list').append("<li data-theme='b' style='text-align: center;'>Number of interchanges: " + (mingroupedroute.routes.length - 1) + "</li>").listview('refresh');
 
 	zoom(zoomstations);
-	if(!searching)
-	$.mobile.activePage.find('#popupPanel').panel("open");
+	//if(!searching)
+	//$.mobile.activePage.find('#popupPanel').panel("open");
 	//alert("Duration: " + mintime + " \r\nStops: " + (mingroupedroute.routes.length-1));
 }
 
@@ -422,14 +431,29 @@ function drawroute(route) {
 			if (stats == -1)
 				stats = 0;
 			var iconimage = 'images/metro.png';
+			var startdist = getDistanceFromLatLonInKm(startmarker.position.lat(),startmarker.position.lng(), startstation.lat,startstation.lon);
+			var destdist = getDistanceFromLatLonInKm(stopmarker.position.lat(),stopmarker.position.lng(), endstation.lat,endstation.lon);
+			var startdist = Math.round(startdist * 1000);
+			var destdist = Math.round(destdist * 1000);
+			var startdiststr = "";
+			var destdiststr = "";
+			if (startdist > 0.1 && startdist < 1000) 
+				startdiststr = " (" +startdist + "m from Starting Point)"; 
+			else if (startdist >=1000)
+				startdiststr = " (" +Math.round(startdist/100) /10  + "Km from Starting Point)"; 
+			if (destdist > 0.1 && destdist < 1000) 
+				destdiststr = " (" +destdist + "m from Destination)"; 
+			else if (destdist >=1000)
+				destdiststr = " (" +Math.round(destdist/100) /10 + "Km from Destination)"; 
+			
 			if (this == startstation) {
 				iconimage = 'images/metrostart.png';
 				//$('#route-list').append("<li data-theme='b' style='text-align: center;'>Start</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='a'style='text-align: center;'>Start from: " + this.name + "</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a'style='text-align: center;'>Start from: " + this.name + startdiststr + "</li>").listview('refresh');
 				$('#route-list').append("<li data-theme='d' style='text-align: center;'>(Pass " + stats + " stations)</li>").listview('refresh');
 			} else if (this == endstation) {
 				iconimage = 'images/metrodest.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;'>Destination: " + this.name + "</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;'>Stop at: " + this.name +  destdiststr + "</li>").listview('refresh');
 				//$('#route-list').append("<li data-theme='b'style='text-align: center;'>Destination</li>").listview('refresh');
 			} else if (curr == 0 && this != endstation && this != startstation) {
 				iconimage = 'images/metro.png';
@@ -461,7 +485,7 @@ function drawroute(route) {
 			title : this.name,
 			icon : {
 				path : google.maps.SymbolPath.CIRCLE,
-				scale : 7,
+				scale : 4,
 				strokeColor : "#000000"
 			},
 			map : map
