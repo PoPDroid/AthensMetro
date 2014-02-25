@@ -20,6 +20,7 @@ var mylocation = false;
 var searching =false;
 var inputstart;
 var inputdest;
+var test;
 
 function station(stationid, name, routes, lat, lon) {
 	this.stationid = stationid;
