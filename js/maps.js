@@ -510,7 +510,7 @@ function drawroute(route) {
 			title : this.name,
 			icon : {
 				path : google.maps.SymbolPath.CIRCLE,
-				scale : 3,
+				scale : 4,
 				strokeColor : "#000000"
 			},
 			map : map
