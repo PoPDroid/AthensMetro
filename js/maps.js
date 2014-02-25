@@ -17,10 +17,10 @@ var maxstops = 2;
 var stationnames = [];
 var mingroupedroute;
 var mylocation = false;
-var searching =false;
+var searchingdest =false;
+var searchingstart =false;
 var inputstart;
 var inputdest;
-var test;
 
 function station(stationid, name, routes, lat, lon) {
 	this.stationid = stationid;
@@ -154,44 +154,71 @@ function initialize() {
 
 		if (this.value == "choice-1") {
 			$("#startstationsdiv").show();
-			$("#startstationlabel").show();
-			$("#setstartbuttondiv").hide();
-			//$("#setstartbutton").text("Set Start Station");
-			//searching=false;
-			//mylocation = false;
-		    //map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
+			$("#startsearchdiv").hide();
+			if(searchingdest){
+				map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
+				searchingdest = false;
+			}
+			if(searchingstart){
+				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
+				searchingstart = false;
+			}
 		} else if (this.value == "choice-2") {
 			$("#startstationsdiv").hide();
-			$("#startstationlabel").hide();
-			$("#setstartbuttondiv").show();
-			//$("#setstartbuttondiv").text("Add Search Bar");
-			//searching=true;
-			//mylocation = false;
+			$("#startsearchdiv").show();
+			
+			$("#startPage").popup("close");
+			if(searchingdest){
+				searchingdest = false;
+				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
+			}
+			if(!searchingstart){
+				map.controls[google.maps.ControlPosition.TOP].push(inputstart);
+				searchingstart = true;
+			}
 		} else if (this.value == "choice-3") {
 			$("#startstationsdiv").hide();
-			$("#startstationlabel").hide();
-			$("#setstartbuttondiv").show();
+			$("#startsearchdiv").hide();
+			$("#startPage").popup("close");
+			if(searchingdest){
+				searchingdest = false;
+				map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
+			}
+			if(searchingstart){
+				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
+				searchingstart = false;
+			}
+				getLocation();
 			
-			//$("#setstartbutton").text("Set Current Location");
-			//searching=false;
-			//mylocation = true;
-		//map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputstart);
 		}
 	});
 
 	$('input[name=destination-radio]').on('change', function() {
 
 		if (this.value == "choice-1") {
-			$("#deststationlabel").show();
 			$("#destinationstationsdiv").show();
-			$("#setdestbuttondiv").hide();
-			//searching=false;
-		//map.controls[google.maps.ControlPosition.LEFT_CENTER].pop(inputdest);
+			$("#destinationsearchdiv").hide();
+			if(searchingdest){
+				map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
+				searchingdest = false;
+			}
+			if(searchingstart){
+			$("#destinationstationsdiv").hide();
+				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
+				searchingstart = false;
+			}
 		} else if (this.value == "choice-2") {
-			$("#deststationlabel").hide();
-			$("#destinationstationsdiv").hide();;
-			$("#setdestbuttondiv").show();
-			//searching=true;
+			$("#destinationstationsdiv").hide();
+			$("#destinationsearchdiv").show();
+			$("#destPage").popup("close");
+			if(searchingstart){
+				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
+				searchingstart = false;
+			}
+			if(!searchingdest){
+				map.controls[google.maps.ControlPosition.TOP].push(inputdest);
+				searchingdest = true;
+			}
 		}
 	});
 
@@ -404,10 +431,7 @@ function drawShortestRoute(ss, es) {
 	$('#route-list').append("<li data-theme='b' style='text-align: center;'>Number of interchanges: " + (mingroupedroute.routes.length - 1) + "</li>").listview('refresh');
 
 	zoom(zoomstations);
-	//if(!searching)
-	//$.mobile.activePage.find('#popupPanel').panel("open");
-	//alert("Duration: " + mintime + " \r\nStops: " + (mingroupedroute.routes.length-1));
-}
+	}
 
 function drawroute(route) {
 
