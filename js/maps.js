@@ -276,7 +276,7 @@ function searchBox() {
 	var searchBoxDest = new google.maps.places.SearchBox((inputdest));
 	google.maps.event.addListener(searchBoxStart, 'places_changed', function() {
 		map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
-		searching = false;
+		searchingstart = false;
 		$("#startsearchdiv").hide();
 		var places = searchBoxStart.getPlaces();
 		startmarker.setPosition(places[0].geometry.location);
@@ -288,6 +288,7 @@ function searchBox() {
 
 	google.maps.event.addListener(searchBoxDest, 'places_changed', function() {
 		map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
+		searchingdest = false;
 		$("#destsearchdiv").hide();
 		var places = searchBoxDest.getPlaces();
 		stopmarker.setPosition(places[0].geometry.location);
