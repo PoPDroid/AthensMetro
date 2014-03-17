@@ -1,5 +1,4 @@
 var map;
-var stationarrs = [];
 var linkdurations = [];
 var startmarker;
 var stopmarker;
@@ -10,9 +9,7 @@ var polys = [];
 var fixedpolys = [];
 var infowindow;
 var startstation;
-var touchoption = "none";
 var endstation;
-var maxstops = 2;
 var allstations = [];
 var mingroupedroute;
 var mylocation = false;
@@ -20,57 +17,9 @@ var searchingdest = false;
 var searchingstart = false;
 var inputstart;
 var inputdest;
-var mapcentrelat ;
-var mapcentrelng ;
+var mapcentrelat;
+var mapcentrelng;
 var shortestpolypath;
-
-//route constructor
-function lineroute(name, route, colour) {
-	//durations.length = stations.length because durations = duration of corresponding station from last station
-	this.name = name;
-	this.route = route;
-	this.colour = colour;
-}
-
-function station(stationid, name, line, lat, lon, change) {
-	this.stationid = stationid;
-	this.name = name;
-	this.line = line;
-	this.lat = lat;
-	this.lon = lon;
-	this.change = change;
-}
-
-//route constructor
-function route(name, stations) {
-	//durations.length = stations.length because durations = duration of corresponding station from last station
-	this.name = name;
-	this.stations = stations;
-	this.duration = getStationsArrayDistance(stations);
-}
-
-//route constructor
-function groupedroute(routes, firststation, laststation) {
-	//durations.length = stations.length because durations = duration of corresponding station from last station
-	this.routes = routes;
-	var dur = 0;
-	var st = -1;
-	$.each(routes, function() {
-		dur += this.duration;
-		st++;
-	});
-	this.stops = st;
-	this.duration = dur;
-	this.firststation = firststation;
-	this.laststation = laststation;
-}
-
-function link(fromstation, tostation, duration) {
-	this.fromstation = fromstation;
-	this.tostation = tostation;
-	this.duration = duration;
-	this.distance = getDistanceFromLatLonInKm(tostation.lat, tostation.lon, fromstation.lat, fromstation.lon);
-}
 
 function loadMain() {
 
@@ -129,26 +78,11 @@ function initialize() {
 		}
 	});
 
-	google.maps.event.addListener(map, 'click', function(event) {
-		if (touchoption == "start") {
-			startmarker.setPosition(event.latLng);
-			startstation = closeststation(event.latLng);
-			if (endstation.stationid != "none")
-				drawShortestRoute(startstation, endstation);
-		} else if (touchoption == "destination") {
-			stopmarker.setPosition(event.latLng);
-			endstation = closeststation(event.latLng);
-			if (startstation.stationid != "none")
-				drawShortestRoute(startstation, endstation);
-		}
-
-	});
-
 	drawfixedroutes(mylines);
 	zoom(allstations);
-	var listener = google.maps.event.addListener(map, "idle", function() { 
-	  map.setZoom(map.getZoom()+1); 
-	  google.maps.event.removeListener(listener); 
+	var listener = google.maps.event.addListener(map, "idle", function() {
+		map.setZoom(map.getZoom() + 1);
+		google.maps.event.removeListener(listener);
 	});
 	searchBox();
 	$("#select-choice-start").val("search-start");
@@ -256,7 +190,7 @@ function initialize() {
 			$("#destinationsearchdiv").show();
 		}
 	});
-	
+
 }
 
 function searchBox() {
@@ -379,91 +313,90 @@ function zoom(fitstations) {
 	bounds.extend(startmarker.getPosition());
 	bounds.extend(stopmarker.getPosition());
 	map.fitBounds(bounds);
-	
 
 }
 
 function drawShortestRoute(ss, es) {
 	$("#detailsbutton").show();
-	clearOverlays(); mingroupedroute;
+	clearOverlays();
 	$('#route-list').empty();
-	mingroupedroute = getMinGroupedRoute(ss,es);
+	mingroupedroute = getMinGroupedRoute(ss, es);
 	var zoomstations = [];
 
 	var lineSymbol = {
-    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-    scale: 8,
-    strokeColor: "#000000"
-  	};
-  	
+		path : google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+		scale : 8,
+		strokeColor : "#000000"
+	};
+
 	var polyOptions = {
 		strokeColor : "#FFFFFF",
 		strokeOpacity : 1,
-		strokeWeight : 9,    icons: [{
-      icon: lineSymbol,
-      offset: '100%'
-    }],
+		strokeWeight : 9,
+		icons : [{
+			icon : lineSymbol,
+			offset : '100%'
+		}],
 	};
-	
+
 	var polyline = new google.maps.Polyline(polyOptions);
 	polyline.setMap(map);
 	polys.push(polyline);
 	shortestpolypath = polyline.getPath();
-	
+
 	$.each(mingroupedroute.routes, function() {
 		drawroute(this);
 		$.each(this.stations, function() {
 			zoomstations.push(this);
 		});
 	});
-	
+
 	var count = 0;
-    window.setInterval(function() {
-	      count = (count + 1) % 300;
-	
-	      var icons = polyline.get('icons');
-	      icons[0].offset = (count / 2.6) + '%';
-	      polyline.set('icons', icons);
-	  }, 20);
-	  
+	window.setInterval(function() {
+		count = (count + 1) % 300;
+
+		var icons = polyline.get('icons');
+		icons[0].offset = (count / 2.6) + '%';
+		polyline.set('icons', icons);
+	}, 20);
+
 	$('#route-list').append("<li data-theme='c'></li>").listview('refresh');
 	$('#route-list').append("<li data-theme='b' style='text-align: center;'>Number of interchanges: " + (mingroupedroute.routes.length - 1) + "</li>").listview('refresh');
 
 	zoom(zoomstations);
-	
-	$.each(fixedpolys,function(){
-		this.setOptions({strokeOpacity: 0.3});
+
+	$.each(fixedpolys, function() {
+		this.setOptions({
+			strokeOpacity : 0.3
+		});
 	});
 }
 
-function drawWalkingLine(strt,stp){
-	  // Define a symbol using SVG path notation, with an opacity of 1.
-  var lineSymbol = {
-    path: 'M 0,-1 0,1',
-    strokeOpacity: 1,
-    scale: 4
-  };
+function drawWalkingLine(strt, stp) {
+	// Define a symbol using SVG path notation, with an opacity of 1.
+	var lineSymbol = {
+		path : 'M 0,-1 0,1',
+		strokeOpacity : 1,
+		scale : 4
+	};
 
-  var lineCoordinates = [
-    strt,
-    stp
-  ];
+	var lineCoordinates = [strt, stp];
 
-  var line = new google.maps.Polyline({
-    path: lineCoordinates,
-    strokeOpacity: 0,
-    icons: [{
-      icon: lineSymbol,
-      offset: '0',
-      repeat: '20px'
-    }],
-    map: map
-  });
+	var line = new google.maps.Polyline({
+		path : lineCoordinates,
+		strokeOpacity : 0,
+		icons : [{
+			icon : lineSymbol,
+			offset : '0',
+			repeat : '20px'
+		}],
+		map : map
+	});
 	polys.push(line);
 }
 
-function getMinGroupedRoute(ss,es){
-	var reached =false;
+function getMinGroupedRoute(ss, es) {
+	var reached = false;
 	var resgroupedroute;
 	var resgroupedroutes = [];
 	var prevgroupedroutes = [];
@@ -480,7 +413,7 @@ function getMinGroupedRoute(ss,es){
 			} else {
 				$.each(getChangeStations(start), function() {
 					var change = this;
-					if(hasDirectRoute(start, this)){
+					if (hasDirectRoute(start, this)) {
 						var rt = getDirectRoute(start, this);
 						var tmpgroupedroute = new groupedroute(new Array(rt), start, this);
 						prevgroupedroutes.push(tmpgroupedroute);
@@ -490,84 +423,84 @@ function getMinGroupedRoute(ss,es){
 		});
 
 	});
-	while(!reached){
+	while (!reached) {
 		var oldprevgroupedroutes = [];
 		var newprevgroupedroutes = [];
-		$.each(prevgroupedroutes,function(){
+		$.each(prevgroupedroutes, function() {
 			var currprevgroupedroute = this;
 			oldprevgroupedroutes.push(currprevgroupedroute);
-				$.each(getStationsByName(currprevgroupedroute.laststation.name),function(){
-					var start = this;
-					
-						$.each(getStationsByName(es.name),function(){							
-							if(hasDirectRoute(start, this)){
-									var rt = [];
-									rt =  currprevgroupedroute.routes.slice(0);
-									rt.push(getDirectRoute(start, this));
-									var tmpgroupedroute = new groupedroute(rt, currprevgroupedroute.firststation, this);
-									reached = true;
-									resgroupedroutes.push(tmpgroupedroute);
-								};
-						});
-						if(!reached)
-						{
-							$.each(getChangeStations(start),function(){
-									if(hasDirectRoute(start, this)){
-										var rt = [];
-										rt =  currprevgroupedroute.routes.slice(0);
-										rt.push(getDirectRoute(start, this));
-										var tmpgroupedroute = new groupedroute(rt, currprevgroupedroute.firststation, this);
-										newprevgroupedroutes.push(tmpgroupedroute);
-									}
-							});
-						}
+			$.each(getStationsByName(currprevgroupedroute.laststation.name), function() {
+				var start = this;
+
+				$.each(getStationsByName(es.name), function() {
+					if (hasDirectRoute(start, this)) {
+						var rt = [];
+						rt = currprevgroupedroute.routes.slice(0);
+						rt.push(getDirectRoute(start, this));
+						var tmpgroupedroute = new groupedroute(rt, currprevgroupedroute.firststation, this);
+						reached = true;
+						resgroupedroutes.push(tmpgroupedroute);
+					};
 				});
+				if (!reached) {
+					$.each(getChangeStations(start), function() {
+						if (hasDirectRoute(start, this)) {
+							var rt = [];
+							rt = currprevgroupedroute.routes.slice(0);
+							rt.push(getDirectRoute(start, this));
+							var tmpgroupedroute = new groupedroute(rt, currprevgroupedroute.firststation, this);
+							newprevgroupedroutes.push(tmpgroupedroute);
+						}
+					});
+				}
+			});
 		});
-		
-		$.each(oldprevgroupedroutes,function(){
+
+		$.each(oldprevgroupedroutes, function() {
 			prevgroupedroutes.pop(this);
-		});		
-		$.each(newprevgroupedroutes,function(){
+		});
+		$.each(newprevgroupedroutes, function() {
 			prevgroupedroutes.push(this);
 		});
-		
-	}
-	
-	var minduration = -1;
-		$.each(resgroupedroutes,function(){
-			if(this.duration<minduration || minduration==-1){
-				resgroupedroute = this;
-				minduration=this.duration;
-			}
-	
-		});
-	return resgroupedroute;
+
 	}
 
-	//returns change stations on same rout as from station
+	var minduration = -1;
+	$.each(resgroupedroutes, function() {
+		if (this.duration < minduration || minduration == -1) {
+			resgroupedroute = this;
+			minduration = this.duration;
+		}
+
+	});
+	return resgroupedroute;
+}
+
+//returns change stations on same route as from station
 function getChangeStations(fromstation) {
 	var changestations = [];
 	var currroute;
-			$.each(getRouteByName(fromstation.line).stations, function() {
-				if (this.change) {
-					changestations.push(this);
-					//alert(this.name);
-				}
-			});
+	$.each(getRouteByName(fromstation.line).stations, function() {
+		if (this.change) {
+			changestations.push(this);
+			//alert(this.name);
+		}
+	});
 	return changestations;
 }
 
-function getStationsByName(name){
+//get all stations that have name name
+function getStationsByName(name) {
 	var res = [];
-	$.each(allstations,function(){
-		if(this.name==name)
+	$.each(allstations, function() {
+		if (this.name == name)
 			res.push(this);
 	});
 	return res;
 }
 
 function hasDirectRoute(fromstation, tostation) {
-	return(fromstation.line==tostation.line);
+	return (fromstation.line == tostation.line);
 }
 
 function getStationsBetweenRoute(fromstation, tostation, route) {
@@ -593,21 +526,17 @@ function getStationsBetweenRoute(fromstation, tostation, route) {
 	return resstations;
 }
 
-
-//to do getStationsByName, getDirectRoute
 function getDirectRoute(fromstation, tostation) {
-	
+
 	var directroute;
-	if(hasDirectRoute(fromstation, tostation) ){
+	if (hasDirectRoute(fromstation, tostation)) {
 		directroute = new route("Direct Route", getStationsBetweenRoute(fromstation, tostation, getRouteByName(fromstation.line)));
 	}
-	
+
 	return directroute;
 }
 
-
 function drawroute(route) {
-
 
 	var polyOptions = {
 		strokeColor : getStationColour(route.stations[0]),
@@ -643,40 +572,40 @@ function drawroute(route) {
 				destdiststr = " (" + destdist + "m from Destination)";
 			else if (destdist >= 1000)
 				destdiststr = " (" + Math.round(destdist / 100) / 10 + "Km from Last Stop)";
-			
+
 			var startwalkingdirections = "";
-			if(startdist>0) {
-				if(navigator.userAgent.match(/iPhone|iPad|iPod/i))
-				startwalkingdirections ="<li data-theme='b'><a style='text-align: center;' href = 'http://maps.apple.com/?saddr=" +startmarker.position.lat()+ ","+ startmarker.position.lng()+"&daddr="+startstation.lat+ "," + startstation.lon+"&dirflg=w'  target='_blank'>Directions to Station <br />" + startdiststr + "</a></li>";
-				else			
-				startwalkingdirections ="<li data-theme='b'><a style='text-align: center;' href = 'http://maps.google.com/maps?saddr=" +startmarker.position.lat()+ ","+ startmarker.position.lng()+"&daddr="+startstation.lat+ "," + startstation.lon+"&dirflg=w'  target='_blank'>Directions to Station <br />" + startdiststr + "</a></li>";		
+			if (startdist > 0) {
+				if (navigator.userAgent.match(/iPhone|iPad|iPod/i))
+					startwalkingdirections = "<li data-theme='b'><a style='text-align: center;' href = 'http://maps.apple.com/?saddr=" + startmarker.position.lat() + "," + startmarker.position.lng() + "&daddr=" + startstation.lat + "," + startstation.lon + "&dirflg=w'  target='_blank'>Directions to Station <br />" + startdiststr + "</a></li>";
+				else
+					startwalkingdirections = "<li data-theme='b'><a style='text-align: center;' href = 'http://maps.google.com/maps?saddr=" + startmarker.position.lat() + "," + startmarker.position.lng() + "&daddr=" + startstation.lat + "," + startstation.lon + "&dirflg=w'  target='_blank'>Directions to Station <br />" + startdiststr + "</a></li>";
 			}
 			var destwalkingdirections = "";
-			if(destdist>0){
-				if(navigator.userAgent.match(/iPhone|iPad|iPod/i))
-			 	destwalkingdirections="<li data-theme='b'><a style='text-align: center;' href = 'http://maps.apple.com/?saddr=" +endstation.lat+ "," + endstation.lon+"&daddr="+stopmarker.position.lat()+ ","+ stopmarker.position.lng()+"&dirflg=w'  target='_blank'>Directions to Destination <br />" + destdiststr + "</a></li>";
-				else			
-			 	destwalkingdirections="<li data-theme='b'><a style='text-align: center;' href = 'http://maps.google.com/maps?saddr=" +endstation.lat+ "," + endstation.lon+"&daddr="+stopmarker.position.lat()+ ","+ stopmarker.position.lng()+"&dirflg=w'  target='_blank'>Directions to Destination <br />" + destdiststr+ "</a></li>";
-				
-			} 
-			drawWalkingLine(startmarker.position,new google.maps.LatLng(startstation.lat, startstation.lon));
-			drawWalkingLine(stopmarker.position,new google.maps.LatLng(endstation.lat, endstation.lon));
+			if (destdist > 0) {
+				if (navigator.userAgent.match(/iPhone|iPad|iPod/i))
+					destwalkingdirections = "<li data-theme='b'><a style='text-align: center;' href = 'http://maps.apple.com/?saddr=" + endstation.lat + "," + endstation.lon + "&daddr=" + stopmarker.position.lat() + "," + stopmarker.position.lng() + "&dirflg=w'  target='_blank'>Directions to Destination <br />" + destdiststr + "</a></li>";
+				else
+					destwalkingdirections = "<li data-theme='b'><a style='text-align: center;' href = 'http://maps.google.com/maps?saddr=" + endstation.lat + "," + endstation.lon + "&daddr=" + stopmarker.position.lat() + "," + stopmarker.position.lng() + "&dirflg=w'  target='_blank'>Directions to Destination <br />" + destdiststr + "</a></li>";
+
+			}
+			drawWalkingLine(startmarker.position, new google.maps.LatLng(startstation.lat, startstation.lon));
+			drawWalkingLine(stopmarker.position, new google.maps.LatLng(endstation.lat, endstation.lon));
 			if (this.name == startstation.name) {
 				iconimage = 'images/metrostart.png';
-				$('#route-list').append(startwalkingdirections +"<li data-theme='a'style='text-align: center;color:"+getStationColour(this)+";'>Start from: <br /> " + this.name +"<br />("+this.line+" line)</li> ").listview('refresh');
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";'>Pass " + stats + " stations <br />("+this.line+" line)</li>").listview('refresh');
+				$('#route-list').append(startwalkingdirections + "<li data-theme='a'style='text-align: center;color:" + getStationColour(this) + ";'>Start from: <br /> " + this.name + "<br />(" + this.line + " line)</li> ").listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";'>Pass " + stats + " stations <br />(" + this.line + " line)</li>").listview('refresh');
 			} else if (this.name == endstation.name) {
 				iconimage = 'images/metrodest.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";'>Stop at: <br />" + this.name  + "</li>"+destwalkingdirections).listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";'>Stop at: <br />" + this.name + "</li>" + destwalkingdirections).listview('refresh');
 			} else if (curr == 0 && this.name != endstation.name && this.name != startstation.name) {
 				iconimage = 'images/metro.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";'>Change at: <br />"+this.name+" <br />(" + this.line + " line)</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";' >Pass " + stats + " stations <br />("+this.line+" line)</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";'>Change at: <br />" + this.name + " <br />(" + this.line + " line)</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";' >Pass " + stats + " stations <br />(" + this.line + " line)</li>").listview('refresh');
 			}
 			if (startstation.name == endstation.name) {
 				iconimage = 'images/metrodest.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";'>" + this.name + "</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='a'style='text-align: center;color:"+getStationColour(this)+";'>Destination</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";'>" + this.name + "</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a'style='text-align: center;color:" + getStationColour(this) + ";'>Destination</li>").listview('refresh');
 
 			}
 			var marker = new google.maps.Marker({
@@ -685,13 +614,12 @@ function drawroute(route) {
 				map : map,
 				icon : iconimage
 			});
-			
 
-/*
-			var infowindow = new google.maps.InfoWindow();
-                infowindow.setContent(marker.title);
-    		infowindow.open(map,marker);
-*/
+			/*
+			 var infowindow = new google.maps.InfoWindow();
+			 infowindow.setContent(marker.title);
+			 infowindow.open(map,marker);
+			 */
 
 			markers.push(marker);
 			// Listen for click event
@@ -702,7 +630,7 @@ function drawroute(route) {
 		}
 
 		var colour = getStationColour(this);
-		
+
 		var marker = new google.maps.Marker({
 			position : new google.maps.LatLng(this.lat, this.lon),
 			title : this.name,
@@ -721,15 +649,12 @@ function drawroute(route) {
 		});
 		curr++;
 	});
-	
-
 }
 
-
-function getStationColour(stat){
+function getStationColour(stat) {
 	var res;
-	$.each(mylines,function(){
-		if (stat.line==this.name)
+	$.each(mylines, function() {
+		if (stat.line == this.name)
 			res = this.colour;
 	});
 	return res;
@@ -776,64 +701,6 @@ function deg2rad(deg) {
 	return deg * (Math.PI / 180);
 }
 
-
-//returns array of groupedroutes
-function getRoutesWithStops(fromstation, tostation, maxstops) {
-	var iteration = 0;
-	var possibleroutes = [];
-	var possiblefullroutes = [];
-	var possibleroute = [];
-	var reached = false;
-	if (hasDirectRoute(fromstation, tostation)) {
-		$.each(getDirectRoutes(fromstation, tostation), function() {
-			var groupedrouteout = new groupedroute(new Array(this), fromstation, tostation);
-			possibleroutes.push(groupedrouteout);
-			possiblefullroutes.push(groupedrouteout);
-		});
-		reached = true;
-	} else {
-
-		$.each(getChangeStations(fromstation), function() {
-			var firststop = this;
-			$.each(getDirectRoutes(fromstation, this), function() {
-				//pass rute not array first
-				var groupedrouteout = new groupedroute(new Array(this), fromstation, firststop);
-				possibleroutes.push(groupedrouteout);
-			});
-		});
-	}
-	while ((!reached)) {
-		$.each(possibleroutes, function() {
-			var thisroute = this;
-			if (hasDirectRoute(thisroute.laststation, tostation)) {
-				$.each(getDirectRoutes(this.laststation, tostation), function() {
-					thisroute.routes.push(this);
-					thisroute.laststation = tostation;
-					thisroute.duration += this.duration;
-					possiblefullroutes.push(thisroute);
-				});
-				reached = true;
-				//should be ok till here....look down
-			} else {
-				$.each(getChangeStations(thisroute.laststation), function() {
-					var chst = this;
-					$.each(getDirectRoutes(thisroute.laststation, chst), function() {
-						var groupedrouteout = thisroute;
-						groupedrouteout.routes.push(this);
-						groupedrouteout.laststation = chst;
-						groupedrouteout.duration += this.duration;
-						possibleroutes.push(groupedrouteout);
-					});
-				});
-
-			}
-		});
-		iteration++;
-	}
-
-	return possiblefullroutes;
-}
-
 function getStationsArrayDistance(stations) {
 	var duration = 0;
 	if (stations.length > 1) {
@@ -863,10 +730,6 @@ function getRouteByName(name) {
 	});
 	return resroute;
 }
-
-
-
-
 
 $(function() {
 	$("#mylocation").click(function() {
@@ -902,47 +765,31 @@ function onError(error) {
 
 
 $(document).ready(function() {
-	
-$.getJSON("metro.json",function(json){
-mapcentrelat = json.mapcentrelat ;
-mapcentrelng = json.mapcentrelng ;
-	$.each(json.lines,function(index,value){
-		var stationarr = [];
-		var linename = value.line;
-		$.each(value.stations, function() {
-			var stat = new station(this.name + "-"+ linename , this.name, linename, this.lat, this.lon, this.change);
-			stationarr.push(stat);
-			allstations.push(stat);
-			if (stationarr.length > 1) {
-				linkdurations.push(new link(stationarr[stationarr.length - 2], stationarr[stationarr.length - 1], this.dist));
-			}
-		});
-		stationarrs.push(stationarr);
-		var newroute = new route(linename, stationarr);
-		var col = value.colour;
-		var newline = new lineroute(linename,newroute,col);
-		mylines.push(newline);
+
+	$.getJSON("metro.json", function(json) {
+		mapcentrelat = json.mapcentrelat;
+		mapcentrelng = json.mapcentrelng;
+		$.each(json.lines, function(index, value) {
+			var stationarr = [];
+			var linename = value.line;
+			$.each(value.stations, function() {
+				var stat = new station(this.name + "-" + linename, this.name, linename, this.lat, this.lon, this.change);
+				stationarr.push(stat);
+				allstations.push(stat);
+				if (stationarr.length > 1) {
+					linkdurations.push(new link(stationarr[stationarr.length - 2], stationarr[stationarr.length - 1], this.dist));
+				}
 			});
+			var newroute = new route(linename, stationarr);
+			var col = value.colour;
+			var newline = new lineroute(linename, newroute, col);
+			mylines.push(newline);
 		});
 
-	populateListViews();
-	
-	
-        var options = new ContactFindOptions();
-        options.filter="";          // empty search string returns all contacts
-        options.multiple=true;      // return multiple results
-        filter = ["displayName"];   // return contact.displayName field
+		populateListViews();
 
-        // find contacts
-        navigator.contacts.find(filter, onSuccess, onError, options);
-        
+	});
 });
-
-    function onSuccess(contacts) {
-        for (var i=0; i<contacts.length; i++) {
-            alert(contacts[i].displayName);
-        }
-    };
 
 function drawfixedroutes(lines) {
 
@@ -975,5 +822,6 @@ function loadScript() {
 	} else
 		alert("offline");
 }
+
 window.onload = loadScript;
 
