@@ -1,33 +1,44 @@
 var map;
-var stationarr1 = [];
-var stationarr2 = [];
-var stationarr3 = [];
+var stationarrs = [];
 var linkdurations = [];
 var startmarker;
 var stopmarker;
 var startgpsposition;
-var myroutes = [];
+var mylines = [];
 var markers = [];
 var polys = [];
+var fixedpolys = [];
 var infowindow;
 var startstation;
 var touchoption = "none";
 var endstation;
 var maxstops = 2;
-var stationnames = [];
+var allstations = [];
 var mingroupedroute;
 var mylocation = false;
-var searchingdest =false;
-var searchingstart =false;
+var searchingdest = false;
+var searchingstart = false;
 var inputstart;
 var inputdest;
+var mapcentrelat ;
+var mapcentrelng ;
+var shortestpolypath;
 
-function station(stationid, name, routes, lat, lon) {
+//route constructor
+function lineroute(name, route, colour) {
+	//durations.length = stations.length because durations = duration of corresponding station from last station
+	this.name = name;
+	this.route = route;
+	this.colour = colour;
+}
+
+function station(stationid, name, line, lat, lon, change) {
 	this.stationid = stationid;
 	this.name = name;
-	this.routes = routes;
+	this.line = line;
 	this.lat = lat;
 	this.lon = lon;
+	this.change = change;
 }
 
 //route constructor
@@ -65,14 +76,14 @@ function loadMain() {
 
 	$.mobile.changePage("#mainPage");
 	google.maps.event.trigger(map, 'resize');
-	zoom(mingroupedroute);
+	//zoom(mingroupedroute);
 }
 
 function initialize() {
 
 	var mapOptions = {
 		zoom : 11,
-		center : new google.maps.LatLng(38.074287, 23.808201)
+		center : new google.maps.LatLng(mapcentrelat, mapcentrelng)
 	};
 
 	google.maps.visualRefresh = true;
@@ -88,9 +99,9 @@ function initialize() {
 	var imagestart = 'images/start.png';
 	var imagestop = 'images/stop.png';
 
-	startstation = stationnames[0];
+	startstation = allstations[0];
 
-	endstation = stationnames[stationnames.length - 1];
+	endstation = allstations[allstations.length - 1];
 	startmarker = new google.maps.Marker({
 		map : map,
 		draggable : true,
@@ -133,14 +144,12 @@ function initialize() {
 
 	});
 
-	var myroute1 = new route("Route 1", stationarr1);
-	var myroute2 = new route("Route 2", stationarr2);
-	var myroute3 = new route("Route 3", stationarr3);
-	myroutes.push(myroute1);
-	myroutes.push(myroute2);
-	myroutes.push(myroute3);
-	drawrfixedroutes(myroutes);
-	zoom(stationnames);
+	drawfixedroutes(mylines);
+	zoom(allstations);
+	var listener = google.maps.event.addListener(map, "idle", function() { 
+	  map.setZoom(map.getZoom()+1); 
+	  google.maps.event.removeListener(listener); 
+	});
 	searchBox();
 	$("#select-choice-start").val("search-start");
 	google.maps.event.trigger(map, 'resize');
@@ -155,24 +164,24 @@ function initialize() {
 		if (this.value == "choice-1") {
 			$("#startstationsdiv").show();
 			$("#startsearchdiv").hide();
-			if(searchingdest){
+			if (searchingdest) {
 				map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
 				searchingdest = false;
 			}
-			if(searchingstart){
+			if (searchingstart) {
 				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
 				searchingstart = false;
 			}
 		} else if (this.value == "choice-2") {
 			$("#startstationsdiv").hide();
 			$("#startsearchdiv").show();
-			
+
 			$("#startPage").popup("close");
-			if(searchingdest){
+			if (searchingdest) {
 				searchingdest = false;
 				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
 			}
-			if(!searchingstart){
+			if (!searchingstart) {
 				map.controls[google.maps.ControlPosition.TOP].push(inputstart);
 				searchingstart = true;
 			}
@@ -180,16 +189,16 @@ function initialize() {
 			$("#startstationsdiv").hide();
 			$("#startsearchdiv").hide();
 			$("#startPage").popup("close");
-			if(searchingdest){
+			if (searchingdest) {
 				searchingdest = false;
 				map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
 			}
-			if(searchingstart){
+			if (searchingstart) {
 				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
 				searchingstart = false;
 			}
-				getLocation();
-			
+			getLocation();
+
 		}
 	});
 
@@ -198,12 +207,12 @@ function initialize() {
 		if (this.value == "choice-1") {
 			$("#destinationstationsdiv").show();
 			$("#destinationsearchdiv").hide();
-			if(searchingdest){
+			if (searchingdest) {
 				map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
 				searchingdest = false;
 			}
-			if(searchingstart){
-			$("#destinationstationsdiv").hide();
+			if (searchingstart) {
+				$("#destinationstationsdiv").hide();
 				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
 				searchingstart = false;
 			}
@@ -211,11 +220,11 @@ function initialize() {
 			$("#destinationstationsdiv").hide();
 			$("#destinationsearchdiv").show();
 			$("#destPage").popup("close");
-			if(searchingstart){
+			if (searchingstart) {
 				map.controls[google.maps.ControlPosition.TOP].pop(inputstart);
 				searchingstart = false;
 			}
-			if(!searchingdest){
+			if (!searchingdest) {
 				map.controls[google.maps.ControlPosition.TOP].push(inputdest);
 				searchingdest = true;
 			}
@@ -247,6 +256,7 @@ function initialize() {
 			$("#destinationsearchdiv").show();
 		}
 	});
+	
 }
 
 function searchBox() {
@@ -260,17 +270,6 @@ function searchBox() {
 	map.controls[google.maps.ControlPosition.RIGHT_TOP].push(startbutton);
 	map.controls[google.maps.ControlPosition.RIGHT_TOP].push(destbutton);
 	map.controls[google.maps.ControlPosition.LEFT_TOP].push(detailsbutton);
-	//var startoption = (document.getElementById('select-choice-start'));
-	//var destoption = (document.getElementById('select-choice-destinatoin'));
-
-	/*
-	 map.controls[google.maps.ControlPosition.RIGHT_TOP].push(inputstart);
-	 map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(inputdest);
-	 map.controls[google.maps.ControlPosition.RIGHT_TOP].push(startstation);
-	 map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(deststation);
-	 //map.controls[google.maps.ControlPosition.BOTTOM_LEFT].pop(deststation);
-	 //map.controls[google.maps.ControlPosition.TOP_CENTER].push(startoption);
-	 //map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(destoption);*/
 
 	var searchBoxStart = new google.maps.places.SearchBox((inputstart));
 	var searchBoxDest = new google.maps.places.SearchBox((inputdest));
@@ -288,7 +287,6 @@ function searchBox() {
 
 	google.maps.event.addListener(searchBoxDest, 'places_changed', function() {
 		map.controls[google.maps.ControlPosition.TOP].pop(inputdest);
-		searchingdest = false;
 		$("#destsearchdiv").hide();
 		var places = searchBoxDest.getPlaces();
 		stopmarker.setPosition(places[0].geometry.location);
@@ -297,15 +295,11 @@ function searchBox() {
 			drawShortestRoute(startstation, endstation);
 	});
 
-	// Bias the SearchBox results towards places that are within the bounds of the
-	// current map's viewport.
 	google.maps.event.addListener(map, 'bounds_changed', function() {
 		var bounds = map.getBounds();
 		searchBoxStart.setBounds(bounds);
 	});
 
-	// Bias the SearchBox results towards places that are within the bounds of the
-	// current map's viewport.
 	google.maps.event.addListener(map, 'bounds_changed', function() {
 		var bounds = map.getBounds();
 		searchBoxDest.setBounds(bounds);
@@ -328,10 +322,10 @@ function setStartStation(stationid) {
 		drawShortestRoute(startstation, endstation);
 	$('input[data-type="search"]').val("");
 	$('input[data-type="search"]').trigger("keyup");
-	
+
 	$(".ui-popup").popup("close");
 	//$("#startstationlabel").text(startstation.name);
-	
+
 }
 
 function setEndStation(stationid) {
@@ -348,7 +342,7 @@ function setEndStation(stationid) {
 
 function getStationByID(stationid) {
 	var outstation;
-	$.each(stationnames, function() {
+	$.each(allstations, function() {
 		if (stationid == this.stationid)
 			outstation = this;
 	});
@@ -357,25 +351,10 @@ function getStationByID(stationid) {
 
 function populateListViews() {
 
-	$.each(stationarr1, function() {
-		if (!($.inArray(this, stationnames) > -1)) {
-			stationnames.push(this);
-		}
-	});
-	$.each(stationarr2, function() {
-		if (!($.inArray(this, stationnames) > -1)) {
-			stationnames.push(this);
-		}
-	});
-	$.each(stationarr3, function() {
-		if (!($.inArray(this, stationnames) > -1)) {
-			stationnames.push(this);
-		}
-	});
 	var output = '';
-	$.each(stationnames, function() {
-		$('#stations-start').append("<li onclick='setStartStation(" + this.stationid + ")'  class='ui-screen-hidden' ><a>" + this.name + "</a></li>");
-		$('#stations-dest').append("<li onclick='setEndStation(" + this.stationid + ")' class='ui-screen-hidden' ><a>" + this.name + "</a></li>");
+	$.each(allstations, function() {
+		$('#stations-start').append("<li onclick='setStartStation(\"" + this.stationid + "\")'  class='ui-screen-hidden' ><a>" + this.stationid + "</a></li>");
+		$('#stations-dest').append("<li onclick='setEndStation(\"" + this.stationid + "\")' class='ui-screen-hidden' ><a>" + this.stationid + "</a></li>");
 	});
 	$('#stations-start').listview('refresh');
 	$('#stations-dest').listview('refresh');
@@ -400,46 +379,240 @@ function zoom(fitstations) {
 	bounds.extend(startmarker.getPosition());
 	bounds.extend(stopmarker.getPosition());
 	map.fitBounds(bounds);
-	//map.setZoom(map.getZoom() );
+	
+
 }
 
 function drawShortestRoute(ss, es) {
 	$("#detailsbutton").show();
-	clearOverlays();
-	mingroupedroute;
+	clearOverlays(); mingroupedroute;
 	$('#route-list').empty();
-	var mintime = -1;
-	var time = 0;
-	for (var i = 0; i < getRoutesWithStops(ss, es, 4).length; i++) {
-		var currgroupedroute = getRoutesWithStops(ss, es, 4)[i];
-
-		if ((currgroupedroute.duration < mintime) || mintime < 0) {
-			mintime = currgroupedroute.duration;
-			mingroupedroute = currgroupedroute;
-			/////here we must consider whether to take shortest path or least number of stations
-		}
-	};
+	mingroupedroute = getMinGroupedRoute(ss,es);
 	var zoomstations = [];
-	$('#route-list').append("<li data-theme='c'></li>").listview('refresh');
+
+	var lineSymbol = {
+    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+    scale: 8,
+    strokeColor: "#000000"
+  	};
+  	
+	var polyOptions = {
+		strokeColor : "#FFFFFF",
+		strokeOpacity : 1,
+		strokeWeight : 9,    icons: [{
+      icon: lineSymbol,
+      offset: '100%'
+    }],
+	};
+	
+	var polyline = new google.maps.Polyline(polyOptions);
+	polyline.setMap(map);
+	polys.push(polyline);
+	shortestpolypath = polyline.getPath();
+	
 	$.each(mingroupedroute.routes, function() {
 		drawroute(this);
 		$.each(this.stations, function() {
 			zoomstations.push(this);
 		});
 	});
+	
+	var count = 0;
+    window.setInterval(function() {
+	      count = (count + 1) % 300;
+	
+	      var icons = polyline.get('icons');
+	      icons[0].offset = (count / 2.6) + '%';
+	      polyline.set('icons', icons);
+	  }, 20);
+	  
 	$('#route-list').append("<li data-theme='c'></li>").listview('refresh');
-		$('#route-list').append("<li data-theme='c'></li>").listview('refresh');
 	$('#route-list').append("<li data-theme='b' style='text-align: center;'>Number of interchanges: " + (mingroupedroute.routes.length - 1) + "</li>").listview('refresh');
 
 	zoom(zoomstations);
+	
+	$.each(fixedpolys,function(){
+		this.setOptions({strokeOpacity: 0.3});
+	});
+}
+
+function drawWalkingLine(strt,stp){
+	  // Define a symbol using SVG path notation, with an opacity of 1.
+  var lineSymbol = {
+    path: 'M 0,-1 0,1',
+    strokeOpacity: 1,
+    scale: 4
+  };
+
+  var lineCoordinates = [
+    strt,
+    stp
+  ];
+
+  var line = new google.maps.Polyline({
+    path: lineCoordinates,
+    strokeOpacity: 0,
+    icons: [{
+      icon: lineSymbol,
+      offset: '0',
+      repeat: '20px'
+    }],
+    map: map
+  });
+	polys.push(line);
+}
+
+function getMinGroupedRoute(ss,es){
+	var reached =false;
+	var resgroupedroute;
+	var resgroupedroutes = [];
+	var prevgroupedroutes = [];
+	var currstart;
+	var currstop;
+	$.each(getStationsByName(ss.name), function() {
+		var start = this;
+		$.each(getStationsByName(es.name), function() {
+			var end = this;
+			if (hasDirectRoute(start, end)) {//there is a direct route
+				reached = true;
+				var rt = getDirectRoute(start, end);
+				resgroupedroute = new groupedroute(new Array(rt), start, end);
+			} else {
+				$.each(getChangeStations(start), function() {
+					var change = this;
+					if(hasDirectRoute(start, this)){
+						var rt = getDirectRoute(start, this);
+						var tmpgroupedroute = new groupedroute(new Array(rt), start, this);
+						prevgroupedroutes.push(tmpgroupedroute);
+					}
+				});
+			}
+		});
+
+	});
+	while(!reached){
+		var oldprevgroupedroutes = [];
+		var newprevgroupedroutes = [];
+		$.each(prevgroupedroutes,function(){
+			var currprevgroupedroute = this;
+			oldprevgroupedroutes.push(currprevgroupedroute);
+				$.each(getStationsByName(currprevgroupedroute.laststation.name),function(){
+					var start = this;
+					
+						$.each(getStationsByName(es.name),function(){							
+							if(hasDirectRoute(start, this)){
+									var rt = [];
+									rt =  currprevgroupedroute.routes.slice(0);
+									rt.push(getDirectRoute(start, this));
+									var tmpgroupedroute = new groupedroute(rt, currprevgroupedroute.firststation, this);
+									reached = true;
+									resgroupedroutes.push(tmpgroupedroute);
+								};
+						});
+						if(!reached)
+						{
+							$.each(getChangeStations(start),function(){
+									if(hasDirectRoute(start, this)){
+										var rt = [];
+										rt =  currprevgroupedroute.routes.slice(0);
+										rt.push(getDirectRoute(start, this));
+										var tmpgroupedroute = new groupedroute(rt, currprevgroupedroute.firststation, this);
+										newprevgroupedroutes.push(tmpgroupedroute);
+									}
+							});
+						}
+				});
+		});
+		
+		$.each(oldprevgroupedroutes,function(){
+			prevgroupedroutes.pop(this);
+		});		
+		$.each(newprevgroupedroutes,function(){
+			prevgroupedroutes.push(this);
+		});
+		
 	}
+	
+	var minduration = -1;
+		$.each(resgroupedroutes,function(){
+			if(this.duration<minduration || minduration==-1){
+				resgroupedroute = this;
+				minduration=this.duration;
+			}
+	
+		});
+	return resgroupedroute;
+	}
+
+	//returns change stations on same rout as from station
+function getChangeStations(fromstation) {
+	var changestations = [];
+	var currroute;
+			$.each(getRouteByName(fromstation.line).stations, function() {
+				if (this.change) {
+					changestations.push(this);
+					//alert(this.name);
+				}
+			});
+	return changestations;
+}
+
+function getStationsByName(name){
+	var res = [];
+	$.each(allstations,function(){
+		if(this.name==name)
+			res.push(this);
+	});
+	return res;
+}
+
+function hasDirectRoute(fromstation, tostation) {
+	return(fromstation.line==tostation.line);
+}
+
+function getStationsBetweenRoute(fromstation, tostation, route) {
+	var resstations = [];
+	var hit = false;
+	for (var i = $.inArray(fromstation, route.stations); i <= route.stations.length; i++) {
+		resstations.push(route.stations[i]);
+		if (route.stations[i] == tostation) {
+			hit = true;
+			break;
+		}
+	}
+	if (!hit) {
+		resstations = [];
+		for (var i = $.inArray(fromstation, route.stations); i >= 0; i--) {
+			resstations.push(route.stations[i]);
+			if (route.stations[i] == tostation) {
+				hit = true;
+				break;
+			}
+		}
+	}
+	return resstations;
+}
+
+
+//to do getStationsByName, getDirectRoute
+function getDirectRoute(fromstation, tostation) {
+	
+	var directroute;
+	if(hasDirectRoute(fromstation, tostation) ){
+		directroute = new route("Direct Route", getStationsBetweenRoute(fromstation, tostation, getRouteByName(fromstation.line)));
+	}
+	
+	return directroute;
+}
+
 
 function drawroute(route) {
 
+
 	var polyOptions = {
-		strokeColor : "#FFFFFF",
+		strokeColor : getStationColour(route.stations[0]),
 		strokeOpacity : 1,
-		strokeWeight : 4,
+		strokeWeight : 4
 	};
 
 	var poly = new google.maps.Polyline(polyOptions);
@@ -450,46 +623,60 @@ function drawroute(route) {
 	var curr = 0;
 	$.each(route.stations, function() {
 		path.push(new google.maps.LatLng(this.lat, this.lon));
-
-		if (this == startstation || curr == 0 || this == endstation) {
-
+		shortestpolypath.push(new google.maps.LatLng(this.lat, this.lon));
+		if (this.name == startstation.name || curr == 0 || this.name == endstation.name) {
 			var stats = route.stations.length - 2;
 			if (stats == -1)
 				stats = 0;
 			var iconimage = 'images/metro.png';
-			var startdist = getDistanceFromLatLonInKm(startmarker.position.lat(),startmarker.position.lng(), startstation.lat,startstation.lon);
-			var destdist = getDistanceFromLatLonInKm(stopmarker.position.lat(),stopmarker.position.lng(), endstation.lat,endstation.lon);
+			var startdist = getDistanceFromLatLonInKm(startmarker.position.lat(), startmarker.position.lng(), startstation.lat, startstation.lon);
+			var destdist = getDistanceFromLatLonInKm(stopmarker.position.lat(), stopmarker.position.lng(), endstation.lat, endstation.lon);
 			var startdist = Math.round(startdist * 1000);
 			var destdist = Math.round(destdist * 1000);
 			var startdiststr = "";
 			var destdiststr = "";
-			if (startdist > 0.1 && startdist < 1000) 
-				startdiststr = " (" +startdist + "m from Starting Point)"; 
-			else if (startdist >=1000)
-				startdiststr = " (" +Math.round(startdist/100) /10  + "Km from Starting Point)"; 
-			if (destdist > 0.1 && destdist < 1000) 
-				destdiststr = " (" +destdist + "m from Destination)"; 
-			else if (destdist >=1000)
-				destdiststr = " (" +Math.round(destdist/100) /10 + "Km from Destination)"; 
+			if (startdist > 0.1 && startdist < 1000)
+				startdiststr = " (" + startdist + "m from Starting Point)  ";
+			else if (startdist >= 1000)
+				startdiststr = " (" + Math.round(startdist / 100) / 10 + "Km from Starting Point)";
+			if (destdist > 0.1 && destdist < 1000)
+				destdiststr = " (" + destdist + "m from Destination)";
+			else if (destdist >= 1000)
+				destdiststr = " (" + Math.round(destdist / 100) / 10 + "Km from Last Stop)";
 			
-			if (this == startstation) {
-				iconimage = 'images/metrostart.png';
-				//$('#route-list').append("<li data-theme='b' style='text-align: center;'>Start</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='a'style='text-align: center;'>Start from: " + this.name + startdiststr + "</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='d' style='text-align: center;'>(Pass " + stats + " stations)</li>").listview('refresh');
-			} else if (this == endstation) {
-				iconimage = 'images/metrodest.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;'>Stop at: " + this.name +  destdiststr + "</li>").listview('refresh');
-				//$('#route-list').append("<li data-theme='b'style='text-align: center;'>Destination</li>").listview('refresh');
-			} else if (curr == 0 && this != endstation && this != startstation) {
-				iconimage = 'images/metro.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;'>Change at: " + this.name + "</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='d' style='text-align: center;' >(Pass " + stats + " stations)</li>").listview('refresh');
+			var startwalkingdirections = "";
+			if(startdist>0) {
+				if(navigator.userAgent.match(/iPhone|iPad|iPod/i))
+				startwalkingdirections ="<li data-theme='b'><a style='text-align: center;' href = 'http://maps.apple.com/?saddr=" +startmarker.position.lat()+ ","+ startmarker.position.lng()+"&daddr="+startstation.lat+ "," + startstation.lon+"&dirflg=w'  target='_blank'>Directions to Station <br />" + startdiststr + "</a></li>";
+				else			
+				startwalkingdirections ="<li data-theme='b'><a style='text-align: center;' href = 'http://maps.google.com/maps?saddr=" +startmarker.position.lat()+ ","+ startmarker.position.lng()+"&daddr="+startstation.lat+ "," + startstation.lon+"&dirflg=w'  target='_blank'>Directions to Station <br />" + startdiststr + "</a></li>";		
 			}
-			if (startstation == endstation) {
+			var destwalkingdirections = "";
+			if(destdist>0){
+				if(navigator.userAgent.match(/iPhone|iPad|iPod/i))
+			 	destwalkingdirections="<li data-theme='b'><a style='text-align: center;' href = 'http://maps.apple.com/?saddr=" +endstation.lat+ "," + endstation.lon+"&daddr="+stopmarker.position.lat()+ ","+ stopmarker.position.lng()+"&dirflg=w'  target='_blank'>Directions to Destination <br />" + destdiststr + "</a></li>";
+				else			
+			 	destwalkingdirections="<li data-theme='b'><a style='text-align: center;' href = 'http://maps.google.com/maps?saddr=" +endstation.lat+ "," + endstation.lon+"&daddr="+stopmarker.position.lat()+ ","+ stopmarker.position.lng()+"&dirflg=w'  target='_blank'>Directions to Destination <br />" + destdiststr+ "</a></li>";
+				
+			} 
+			drawWalkingLine(startmarker.position,new google.maps.LatLng(startstation.lat, startstation.lon));
+			drawWalkingLine(stopmarker.position,new google.maps.LatLng(endstation.lat, endstation.lon));
+			if (this.name == startstation.name) {
+				iconimage = 'images/metrostart.png';
+				$('#route-list').append(startwalkingdirections +"<li data-theme='a'style='text-align: center;color:"+getStationColour(this)+";'>Start from: <br /> " + this.name +"<br />("+this.line+" line)</li> ").listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";'>Pass " + stats + " stations <br />("+this.line+" line)</li>").listview('refresh');
+			} else if (this.name == endstation.name) {
 				iconimage = 'images/metrodest.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;'>" + this.name + "</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='b'style='text-align: center;'>Destination</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";'>Stop at: <br />" + this.name  + "</li>"+destwalkingdirections).listview('refresh');
+			} else if (curr == 0 && this.name != endstation.name && this.name != startstation.name) {
+				iconimage = 'images/metro.png';
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";'>Change at: <br />"+this.name+" <br />(" + this.line + " line)</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";' >Pass " + stats + " stations <br />("+this.line+" line)</li>").listview('refresh');
+			}
+			if (startstation.name == endstation.name) {
+				iconimage = 'images/metrodest.png';
+				$('#route-list').append("<li data-theme='a' style='text-align: center;color:"+getStationColour(this)+";'>" + this.name + "</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a'style='text-align: center;color:"+getStationColour(this)+";'>Destination</li>").listview('refresh');
 
 			}
 			var marker = new google.maps.Marker({
@@ -498,6 +685,14 @@ function drawroute(route) {
 				map : map,
 				icon : iconimage
 			});
+			
+
+/*
+			var infowindow = new google.maps.InfoWindow();
+                infowindow.setContent(marker.title);
+    		infowindow.open(map,marker);
+*/
+
 			markers.push(marker);
 			// Listen for click event
 			google.maps.event.addListener(marker, 'click', function() {
@@ -506,13 +701,15 @@ function drawroute(route) {
 
 		}
 
+		var colour = getStationColour(this);
+		
 		var marker = new google.maps.Marker({
 			position : new google.maps.LatLng(this.lat, this.lon),
 			title : this.name,
 			icon : {
 				path : google.maps.SymbolPath.CIRCLE,
 				scale : 4,
-				strokeColor : "#000000"
+				strokeColor : colour
 			},
 			map : map
 		});
@@ -524,54 +721,18 @@ function drawroute(route) {
 		});
 		curr++;
 	});
-}
-
-function getCommonRoutesColour(stats) {
-	var route1count = 0;
-	var route2count = 0;
-	var route3count = 0;
-	$.each(stats, function() {
-		$.each(this.routes, function() {
-
-			if (this.name == "Route 1") {
-				route1count++;
-			} else if (this.name == "Route 2") {
-				route2count++;
-			} else if (this.name == "Route 3") {
-				route3count++;
-			}
-		});
-	});
-	//????
-	//get max col
+	
 
 }
 
-function drawrfixedroutes(routes) {
 
-	$.each(routes, function() {
-		var colour = "";
-		if (this.name == "Route 1") {
-			colour = "#0000FF";
-		} else if (this.name == "Route 2") {
-			colour = "#FF0000";
-		} else if (this.name == "Route 3") {
-			colour = "#00FF00";
-		}
-		var polyOptions = {
-			strokeColor : colour,
-			strokeOpacity : 0.5,
-			strokeWeight : 12
-		};
-		var poly = new google.maps.Polyline(polyOptions);
-		poly.setMap(map);
-		var path = poly.getPath();
-
-		$.each(this.stations, function() {
-			path.push(new google.maps.LatLng(this.lat, this.lon));
-
-		});
+function getStationColour(stat){
+	var res;
+	$.each(mylines,function(){
+		if (stat.line==this.name)
+			res = this.colour;
 	});
+	return res;
 }
 
 function onItemClick(event, pin) {
@@ -587,21 +748,7 @@ function closeststation(latlong) {
 	var closest = -1;
 
 	var clstation;
-	$.each(stationarr1, function() {
-		var distance = getDistanceFromLatLonInKm(latlong.lat(), latlong.lng(), this.lat, this.lon);
-		if (closest == -1 || distance < closest) {
-			clstation = this;
-			closest = distance;
-		}
-	});
-	$.each(stationarr2, function() {
-		var distance = getDistanceFromLatLonInKm(latlong.lat(), latlong.lng(), this.lat, this.lon);
-		if (closest == -1 || distance < closest) {
-			clstation = this;
-			closest = distance;
-		}
-	});
-	$.each(stationarr3, function() {
+	$.each(allstations, function() {
 		var distance = getDistanceFromLatLonInKm(latlong.lat(), latlong.lng(), this.lat, this.lon);
 		if (closest == -1 || distance < closest) {
 			clstation = this;
@@ -626,21 +773,9 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
 }
 
 function deg2rad(deg) {
-	return deg * (Math.PI / 180)
+	return deg * (Math.PI / 180);
 }
 
-//returns array of array of stations on path from start to stop stations
-function getDirectRoutes(fromstation, tostation) {
-
-	var directroutes = [];
-	$.each(fromstation.routes, function() {
-		if (($.inArray(this.toString(), tostation.routes) > -1)) {
-			var directroute = new route("Direct Route", getStationsBetweenRoute(fromstation, tostation, getRouteByName(this)));
-			directroutes.push(directroute);
-		}
-	});
-	return directroutes;
-}
 
 //returns array of groupedroutes
 function getRoutesWithStops(fromstation, tostation, maxstops) {
@@ -667,7 +802,6 @@ function getRoutesWithStops(fromstation, tostation, maxstops) {
 			});
 		});
 	}
-
 	while ((!reached)) {
 		$.each(possibleroutes, function() {
 			var thisroute = this;
@@ -684,7 +818,6 @@ function getRoutesWithStops(fromstation, tostation, maxstops) {
 				$.each(getChangeStations(thisroute.laststation), function() {
 					var chst = this;
 					$.each(getDirectRoutes(thisroute.laststation, chst), function() {
-
 						var groupedrouteout = thisroute;
 						groupedrouteout.routes.push(this);
 						groupedrouteout.laststation = chst;
@@ -721,77 +854,19 @@ function getLinkDuration(fromstation, tostation) {
 	return duration;
 }
 
-function hasDirectRoute(fromstation, tostation) {
-	return (getDirectRoutes(fromstation, tostation).length > 0);
-}
-
 function getRouteByName(name) {
 	var resroute;
-	$.each(myroutes, function() {
-		if (this.name == name) {
-			resroute = this;
+	$.each(mylines, function() {
+		if (this.route.name == name) {
+			resroute = this.route;
 		}
 	});
 	return resroute;
 }
 
-function getCommonRoute(firststation, laststation) {
-	var resroute;
-	$.each(myroutes, function() {
-		if (($.inArray(this.name, firststation.routes) > -1) && ($.inArray(this.name, laststation.routes) > -1)) {
-			resroute = this;
-		}
-	});
-	return resroute;
-}
 
-//returns change stations on same rout as from station
-function getChangeStations(fromstation) {
-	var changestations = [];
-	var currroute;
-	$.each(myroutes, function() {
-		if ($.inArray(this.name, fromstation.routes) > -1) {
-			currroute = this;
-			$.each(currroute.stations, function() {
-				if (this.routes.length > 1) {
-					changestations.push(this);
-					//alert(this.name);
-				}
-			});
-		}
-	});
-	return changestations;
-}
 
-function getShortestRoute(routes) {
-	var minroute;
-	$.each(routes, function() {
 
-	});
-}
-
-function getStationsBetweenRoute(fromstation, tostation, route) {
-	var resstations = [];
-	var hit = false;
-	for (var i = $.inArray(fromstation, route.stations); i <= route.stations.length; i++) {
-		resstations.push(route.stations[i]);
-		if (route.stations[i] == tostation) {
-			hit = true;
-			break;
-		}
-	}
-	if (!hit) {
-		resstations = [];
-		for (var i = $.inArray(fromstation, route.stations); i >= 0; i--) {
-			resstations.push(route.stations[i]);
-			if (route.stations[i] == tostation) {
-				hit = true;
-				break;
-			}
-		}
-	}
-	return resstations;
-}
 
 $(function() {
 	$("#mylocation").click(function() {
@@ -822,141 +897,73 @@ function showPosition(position) {
 }
 
 function onError(error) {
-	alert('code: ' + error.code + '\n' + 'message: ' + error.message + '\n');
+	//alert('code: ' + error.code + '\n' + 'message: ' + error.message + '\n');
 }
 
 
 $(document).ready(function() {
-	var station1 = new station("1", "Airport Station", new Array("Route 1"), 37.934715, 23.942335);
-	var station2 = new station("2", "Koropi Station", new Array("Route 1"), 37.913097, 23.895821);
-	var station3 = new station("3", "Peania-Kantza Station", new Array("Route 1"), 37.981506, 23.869907);
-	var station4 = new station("4", "Pallini Station", new Array("Route 1"), 38.005444, 23.869707);
-	var station5 = new station("5", "Doukissis Plakentias Station", new Array("Route 1"), 38.023983, 23.833746);
-	var station6 = new station("6", "Halandri Station", new Array("Route 1"), 38.021976, 23.821611);
-	var station7 = new station("7", "Agia Paraskeyi Station", new Array("Route 1"), 38.017120, 23.812273);
-	var station8 = new station("8", "Nomismatokopio Station", new Array("Route 1"), 38.010159, 23.808237);
-	var station9 = new station("9", "Holargos Station", new Array("Route 1"), 38.004959, 23.794735);
-	var station10 = new station("10", "Ethniki Amyna Station", new Array("Route 1"), 37.999470, 23.784721);
-	var station11 = new station("11", "Katehaki Station", new Array("Route 1"), 37.993477, 23.776918);
-	var station12 = new station("12", "Panormou Station", new Array("Route 1"), 37.993092, 23.763502);
-	var station13 = new station("13", "Ambelokipi Station", new Array("Route 1"), 37.987270, 23.757620);
-	var station14 = new station("14", "Megaro Moussikis Station", new Array("Route 1"), 37.979393, 23.753492);
-	var station15 = new station("15", "Evangelismos Station", new Array("Route 1"), 37.975937, 23.746456);
-	var station16 = new station("16", "Syntagma Station", new Array("Route 1", "Route 2"), 37.975063, 23.735447);
-	var station17 = new station("17", "Monastiraki Station", new Array("Route 1", "Route 3"), 37.976601, 23.726183);
-	var station18 = new station("18", "Keramikos Station", new Array("Route 1"), 37.978733, 23.711073);
-	var station19 = new station("19", "Eleonas Station", new Array("Route 1"), 37.987591, 23.693890);
-	var station20 = new station("20", "Egaleo Station", new Array("Route 1"), 37.991409, 23.681862);
-
-	var station22 = new station("22", "Aghios Antonios Station", new Array("Route 2"), 38.006542, 23.699280);
-	var station23 = new station("23", "Sepolia Station", new Array("Route 2"), 38.002621, 23.713688);
-	var station24 = new station("24", "Attiki Station", new Array("Route 2", "Route 3"), 37.998116, 23.722763);
-	var station25 = new station("25", "Larissa Station", new Array("Route 2"), 37.990192, 23.719177);
-	var station26 = new station("26", "Metaxourghio Station", new Array("Route 2"), 37.986584, 23.720821);
-	var station27 = new station("27", "Omonia Station", new Array("Route 2", "Route 3"), 37.984016, 23.727983);
-	var station28 = new station("28", "Panepistimio Station", new Array("Route 2"), 37.980167, 23.732908);
-	var station29 = new station("29", "Akropoli Station", new Array("Route 2"), 37.968681, 23.729433);
-	var station30 = new station("30", "Syngrou Fix Station", new Array("Route 2"), 37.964081, 23.726145);
-	var station31 = new station("31", "Neos Kosmos Station", new Array("Route 2"), 37.957615, 23.728544);
-	var station32 = new station("32", "Aghios Ioannis Station", new Array("Route 2"), 37.956306, 23.734411);
-	var station33 = new station("33", "Dafni Station", new Array("Route 2"), 37.949314, 23.737202);
-	var station34 = new station("34", "Aghios Dimitrios Station", new Array("Route 2"), 37.941151, 23.740540);
-
-	var station36 = new station("36", "Kifissia Station", new Array("Route 3"), 38.074287, 23.808201);
-	var station37 = new station("37", "KAT Station", new Array("Route 3"), 38.065437, 23.803967);
-	var station38 = new station("38", "Maroussi Station", new Array("Route 3"), 38.056305, 23.805155);
-	var station39 = new station("39", "Neradjiotissa Station", new Array("Route 3"), 38.045479, 23.793570);
-	var station40 = new station("40", "Irini Station", new Array("Route 3"), 38.043098, 23.783792);
-	var station41 = new station("41", "Iraklio Station", new Array("Route 3"), 38.046200, 23.766171);
-	var station42 = new station("42", "Nea Ionia Station", new Array("Route 3"), 38.041401, 23.754854);
-	var station43 = new station("43", "Pefkakia Station", new Array("Route 3"), 38.037128, 23.750179);
-	var station44 = new station("44", "Perissos Station", new Array("Route 3"), 38.032810, 23.744658);
-	var station45 = new station("45", "Ano Patissia Station", new Array("Route 3"), 38.023853, 23.735954);
-	var station46 = new station("46", "Aghios Eleftherios Station", new Array("Route 3"), 38.020119, 23.731791);
-	var station47 = new station("47", "Kato Patissia Station", new Array("Route 3"), 38.011600, 23.728579);
-	var station48 = new station("48", "Aghios Nikolaos Station", new Array("Route 3"), 38.006794, 23.727640);
-	var station49 = new station("49", "Victoria Station", new Array("Route 3"), 37.993088, 23.730200);
-	var station50 = new station("50", "Thissio Station", new Array("Route 3"), 37.976746, 23.720728);
-	var station51 = new station("51", "Petralona Station", new Array("Route 3"), 37.968281, 23.709007);
-	var station52 = new station("52", "Tavros Station", new Array("Route 3"), 37.962582, 23.703470);
-	var station53 = new station("53", "Kalithea Station", new Array("Route 3"), 37.960503, 23.697279);
-	var station54 = new station("54", "Moschato Station", new Array("Route 3"), 37.955132, 23.680010);
-	var station55 = new station("55", "Faliro Station", new Array("Route 3"), 37.944984, 23.664776);
-	var station56 = new station("56", "Piraeus Station", new Array("Route 3"), 37.948063, 23.642447);
-	stationarr1.push(station1);
-	stationarr1.push(station2);
-	stationarr1.push(station3);
-	stationarr1.push(station4);
-	stationarr1.push(station5);
-	stationarr1.push(station6);
-	stationarr1.push(station7);
-	stationarr1.push(station8);
-	stationarr1.push(station9);
-	stationarr1.push(station10);
-	stationarr1.push(station11);
-	stationarr1.push(station12);
-	stationarr1.push(station13);
-	stationarr1.push(station14);
-	stationarr1.push(station15);
-	stationarr1.push(station16);
-	stationarr1.push(station17);
-	stationarr1.push(station18);
-	stationarr1.push(station19);
-	stationarr1.push(station20);
-
-	for (var i = 0; i < (stationarr1.length - 1); i++) {
-		linkdurations.push(new link(stationarr1[i], stationarr1[i + 1], 1));
-	}
-	stationarr2.push(station22);
-	stationarr2.push(station23);
-	stationarr2.push(station24);
-	stationarr2.push(station25);
-	stationarr2.push(station26);
-	stationarr2.push(station27);
-	stationarr2.push(station28);
-	stationarr2.push(station16);
-	stationarr2.push(station29);
-	stationarr2.push(station30);
-	stationarr2.push(station31);
-	stationarr2.push(station32);
-	stationarr2.push(station33);
-	stationarr2.push(station34);
-
-	for (var i = 0; i < (stationarr2.length - 1); i++) {
-		linkdurations.push(new link(stationarr2[i], stationarr2[i + 1], 1));
-	}
-
-	stationarr3.push(station36);
-	stationarr3.push(station37);
-	stationarr3.push(station38);
-	stationarr3.push(station39);
-	stationarr3.push(station40);
-	stationarr3.push(station41);
-	stationarr3.push(station42);
-	stationarr3.push(station43);
-	stationarr3.push(station44);
-	stationarr3.push(station45);
-	stationarr3.push(station46);
-	stationarr3.push(station47);
-	stationarr3.push(station48);
-	stationarr3.push(station24);
-	stationarr3.push(station49);
-	stationarr3.push(station27);
-	stationarr3.push(station17);
-	stationarr3.push(station50);
-	stationarr3.push(station51);
-	stationarr3.push(station52);
-	stationarr3.push(station53);
-	stationarr3.push(station54);
-	stationarr3.push(station55);
-	stationarr3.push(station56);
-
-	for (var i = 0; i < (stationarr3.length - 1); i++) {
-		linkdurations.push(new link(stationarr3[i], stationarr3[i + 1], 1));
-	}
+	
+$.getJSON("metro.json",function(json){
+mapcentrelat = json.mapcentrelat ;
+mapcentrelng = json.mapcentrelng ;
+	$.each(json.lines,function(index,value){
+		var stationarr = [];
+		var linename = value.line;
+		$.each(value.stations, function() {
+			var stat = new station(this.name + "-"+ linename , this.name, linename, this.lat, this.lon, this.change);
+			stationarr.push(stat);
+			allstations.push(stat);
+			if (stationarr.length > 1) {
+				linkdurations.push(new link(stationarr[stationarr.length - 2], stationarr[stationarr.length - 1], this.dist));
+			}
+		});
+		stationarrs.push(stationarr);
+		var newroute = new route(linename, stationarr);
+		var col = value.colour;
+		var newline = new lineroute(linename,newroute,col);
+		mylines.push(newline);
+			});
+		});
 
 	populateListViews();
+	
+	
+        var options = new ContactFindOptions();
+        options.filter="";          // empty search string returns all contacts
+        options.multiple=true;      // return multiple results
+        filter = ["displayName"];   // return contact.displayName field
+
+        // find contacts
+        navigator.contacts.find(filter, onSuccess, onError, options);
+        
 });
+
+    function onSuccess(contacts) {
+        for (var i=0; i<contacts.length; i++) {
+            alert(contacts[i].displayName);
+        }
+    };
+
+function drawfixedroutes(lines) {
+
+	$.each(lines, function() {
+		var colour = this.colour;
+		var polyOptions = {
+			strokeColor : colour,
+			strokeOpacity : 0.5,
+			strokeWeight : 12
+		};
+		var poly = new google.maps.Polyline(polyOptions);
+		poly.setMap(map);
+		fixedpolys.push(poly);
+		var path = poly.getPath();
+
+		$.each(this.route.stations, function() {
+			path.push(new google.maps.LatLng(this.lat, this.lon));
+
+		});
+	});
+}
 
 function loadScript() {
 	if (window.navigator.onLine) {
@@ -968,5 +975,5 @@ function loadScript() {
 	} else
 		alert("offline");
 }
+window.onload = loadScript;
 
-window.onload = loadScript; 

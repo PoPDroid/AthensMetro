@@ -1,0 +1,80 @@
+{
+"metro":"Athens Metro",
+"mapcentrelat":38.074287,
+"mapcentrelng":23.808201,
+"lines":[
+{
+"line":"red", "colour": "#FF0000", "stations":
+[
+{"name":"Aghios Antonios Station","lat":38.006542,"lon":23.699280,"dist":1,"change":false},
+{"name":"Sepolia Station","lat":38.002621,"lon":23.713688,"dist":1,"change":false},
+{"name":"Attiki Station","lat":37.998116,"lon":23.722763,"dist":1,"change":false},
+{"name":"Larissa Station","lat":37.990192,"lon":23.719177,"dist":1,"change":false},
+{"name":"Metaxourghio Station","lat":37.986584,"lon":23.720821,"dist":1,"change":false},
+{"name":"Omonia Station","lat":37.984016,"lon":23.727983,"dist":1,"change":true},
+{"name":"Panepistimio Station","lat":37.980167,"lon":23.732908,"dist":1,"change":false},
+{"name":"Syntagma Station","lat":37.975063,"lon":23.735447,"dist":1,"change":true},
+{"name":"Akropoli Station","lat":37.968681,"lon":23.729433,"dist":1,"change":false},
+{"name":"Syngrou Fix Station","lat":37.964081,"lon":23.726145,"dist":1,"change":false},
+{"name":"Neos Kosmos Station","lat":37.957615,"lon":23.728544,"dist":1,"change":false},
+{"name":"Aghios Ioannis Station","lat":37.956306,"lon":23.734411,"dist":1,"change":false},
+{"name":"Dafni Station","lat":37.949314,"lon":23.737202,"dist":1,"change":false},
+{"name":"Aghios Dimitrios Station","lat":37.941151,"lon":23.740540,"dist":1,"change":false}
+]
+},
+{
+"line":"blue", "colour": "#0000FF", "stations":
+[
+{"name":"Airport Station","lat":37.934715,"lon":23.942335,"dist":0,"change":false},
+{"name":"Koropi Station","lat":37.913097,"lon":23.895821,"dist":1,"change":false},
+{"name":"Peania-Kantza Station","lat":37.981506,"lon":23.869907,"dist":1,"change":false},
+{"name":"Pallini Station","lat":38.005444,"lon":23.869707,"dist":1,"change":false},
+{"name":"Doukissis Plakentias Station","lat":38.023983,"lon":23.833746,"dist":1,"change":false},
+{"name":"Halandri Station","lat":38.021976,"lon":23.821611,"dist":1,"change":false},
+{"name":"Agia Paraskeyi Station","lat":38.017120,"lon":23.812273,"dist":1,"change":false},
+{"name":"Nomismatokopio Station","lat":38.010159,"lon":23.808237,"dist":1,"change":false},
+{"name":"Holargos Station","lat":38.004959,"lon":23.794735,"dist":1,"change":false},
+{"name":"Ethniki Amyna Station","lat":37.999470,"lon":23.784721,"dist":1,"change":false},
+{"name":"Katehaki Station","lat":37.993477,"lon":23.776918,"dist":1,"change":false},
+{"name":"Panormou Station","lat":37.993092,"lon":23.763502,"dist":1,"change":false},
+{"name":"Ambelokipi Station","lat":37.987270,"lon":23.757620,"dist":1,"change":false},
+{"name":"Megaro Moussikis Station","lat":37.979393,"lon":23.753492,"dist":1,"change":false},
+{"name":"Evangelismos Station","lat":37.975937,"lon":23.746456,"dist":1,"change":false},
+{"name":"Syntagma Station","lat":37.975063,"lon":23.735447,"dist":1,"change":true},
+{"name":"Monastiraki Station","lat":37.976601,"lon":23.726183,"dist":1,"change":true},
+{"name":"Keramikos Station","lat":37.978733,"lon":23.711073,"dist":1,"change":false},
+{"name":"Eleonas Station","lat":37.987591,"lon":23.693890,"dist":1,"change":false},
+{"name":"Egaleo Station","lat":37.991409,"lon":23.681862,"dist":1,"change":false}
+]
+},
+{
+"line":"green", "colour": "#00FF00", "stations":
+[
+{"name":"Kifissia Station","lat":38.074287,"lon":23.808201,"dist":0,"change":false},
+{"name":"KAT Station","lat":38.065437,"lon":23.803967,"dist":1,"change":false},
+{"name":"Maroussi Station","lat":38.056305,"lon":23.805155,"dist":1,"change":false},
+{"name":"Neradjiotissa Station","lat":38.045479,"lon":23.793570,"dist":1,"change":false},
+{"name":"Irini Station","lat":38.043098,"lon":23.783792,"dist":1,"change":false},
+{"name":"Iraklio Station","lat":38.046200,"lon":23.766171,"dist":1,"change":false},
+{"name":"Nea Ionia Station","lat":38.041401,"lon":23.754854,"dist":1,"change":false},
+{"name":"Pefkakia Station","lat":38.037128,"lon":23.750179,"dist":1,"change":false},
+{"name":"Perissos Station","lat":38.032810,"lon":23.744658,"dist":1,"change":false},
+{"name":"Ano Patissia Station","lat":38.023853,"lon":23.735954,"dist":1,"change":false},
+{"name":"Aghios Eleftherios Station","lat":38.020119,"lon":23.731791,"dist":1,"change":false},
+{"name":"Kato Patissia Station","lat":38.011600,"lon":23.728579,"dist":1,"change":false},
+{"name":"Aghios Nikolaos Station","lat":38.006794,"lon":23.727640,"dist":1,"change":false},
+{"name":"Attiki Station","lat":37.998116,"lon":23.722763,"dist":1,"change":true},
+{"name":"Victoria Station","lat":37.993088,"lon":23.730200,"dist":1,"change":false},
+{"name":"Omonia Station","lat":37.984016,"lon":23.727983,"dist":1,"change":true},
+{"name":"Monastiraki Station","lat":37.976601,"lon":23.726183,"dist":1,"change":true},
+{"name":"Thissio Station","lat":37.976746,"lon":23.720728,"dist":1,"change":false},
+{"name":"Petralona Station","lat":37.968281,"lon":23.709007,"dist":1,"change":false},
+{"name":"Tavros Station","lat":37.962582,"lon":23.703470,"dist":1,"change":false},
+{"name":"Kalithea Station","lat":37.960503,"lon":23.697279,"dist":1,"change":false},
+{"name":"Moschato Station","lat":37.955132,"lon":23.680010,"dist":1,"change":false},
+{"name":"Faliro Station","lat":37.944984,"lon":23.664776,"dist":1,"change":false},
+{"name":"Piraeus Station","lat":37.948063,"lon":23.642447,"dist":1,"change":false}
+]
+}
+]
+}
