@@ -44,7 +44,8 @@
 {"name":"Monastiraki Station","lat":37.976601,"lon":23.726183,"dist":1,"change":true},
 {"name":"Keramikos Station","lat":37.978733,"lon":23.711073,"dist":1,"change":false},
 {"name":"Eleonas Station","lat":37.987591,"lon":23.693890,"dist":1,"change":false},
-{"name":"Egaleo Station","lat":37.991409,"lon":23.681862,"dist":1,"change":false}
+{"name":"Egaleo Station","lat":37.991409,"lon":23.681862,"dist":1,"change":false},
+{"name":"Agia Marina","lat":37.996944,"lon":23.667778,"dist":1,"change":false}
 ]
 },
 {
