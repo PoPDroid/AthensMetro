@@ -325,7 +325,7 @@ function drawShortestRoute(ss, es) {
 
 	var lineSymbol = {
 		path : google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-		scale : 8,
+		scale : 6,
 		strokeColor : "#000000"
 	};
 
@@ -565,13 +565,13 @@ function drawroute(route) {
 			var startdiststr = "";
 			var destdiststr = "";
 			if (startdist > 0.1 && startdist < 1000)
-				startdiststr = " (" + startdist + "m from Starting Point)  ";
+				startdiststr = " (" + startdist + "m)  ";
 			else if (startdist >= 1000)
-				startdiststr = " (" + Math.round(startdist / 100) / 10 + "Km from Starting Point)";
+				startdiststr = " (" + Math.round(startdist / 100) / 10 + "Km)";
 			if (destdist > 0.1 && destdist < 1000)
-				destdiststr = " (" + destdist + "m from Destination)";
+				destdiststr = " (" + destdist + "m)";
 			else if (destdist >= 1000)
-				destdiststr = " (" + Math.round(destdist / 100) / 10 + "Km from Last Stop)";
+				destdiststr = " (" + Math.round(destdist / 100) / 10 + "Km)";
 
 			var startwalkingdirections = "";
 			if (startdist > 0) {
@@ -592,20 +592,20 @@ function drawroute(route) {
 			drawWalkingLine(stopmarker.position, new google.maps.LatLng(endstation.lat, endstation.lon));
 			if (this.name == startstation.name) {
 				iconimage = 'images/metrostart.png';
-				$('#route-list').append(startwalkingdirections + "<li data-theme='a'style='text-align: center;color:" + getStationColour(this) + ";'>Start from: <br /> " + this.name + "<br />(" + this.line + " line)</li> ").listview('refresh');
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";'>Pass " + stats + " stations <br />(" + this.line + " line)</li>").listview('refresh');
+				$('#route-list').append(startwalkingdirections + "<li data-icon='"+this.line+"' data-theme='a'><a href='#'>Start from: <br /> " + this.name + "<br />(" + this.line + " line)</a></li> ").listview('refresh');
+				$('#route-list').append("<li  data-icon='"+this.line+"' data-theme='a'  ><a href='#'>Pass " + stats + " stations <br />(" + this.line + " line)</a></li>").listview('refresh');
 			} else if (this.name == endstation.name) {
 				iconimage = 'images/metrodest.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";'>Stop at: <br />" + this.name + "</li>" + destwalkingdirections).listview('refresh');
+				$('#route-list').append("<li data-icon='"+this.line+"'  data-theme='a' ><a href='#'>Stop at: <br />" + this.name + "</a></li>" + destwalkingdirections).listview('refresh');
 			} else if (curr == 0 && this.name != endstation.name && this.name != startstation.name) {
 				iconimage = 'images/metro.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";'>Change at: <br />" + this.name + " <br />(" + this.line + " line)</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";' >Pass " + stats + " stations <br />(" + this.line + " line)</li>").listview('refresh');
+				$('#route-list').append("<li data-icon='"+this.line+"' data-theme='a' ><a href='#'>Change at: <br />" + this.name + " <br />(" + this.line + " line)</a></li>").listview('refresh');
+				$('#route-list').append("<li data-icon='"+this.line+"' data-theme='a'  ><a href='#'>Pass " + stats + " stations <br />(" + this.line + " line)</a></li>").listview('refresh');
 			}
 			if (startstation.name == endstation.name) {
 				iconimage = 'images/metrodest.png';
-				$('#route-list').append("<li data-theme='a' style='text-align: center;color:" + getStationColour(this) + ";'>" + this.name + "</li>").listview('refresh');
-				$('#route-list').append("<li data-theme='a'style='text-align: center;color:" + getStationColour(this) + ";'>Destination</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a' >" + this.name + "</li>").listview('refresh');
+				$('#route-list').append("<li data-theme='a' >Destination</li>").listview('refresh');
 
 			}
 			var marker = new google.maps.Marker({
@@ -659,6 +659,7 @@ function getStationColour(stat) {
 	});
 	return res;
 }
+
 
 function onItemClick(event, pin) {
 	// Create content
