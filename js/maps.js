@@ -798,8 +798,8 @@ function drawfixedroutes(lines) {
 		var colour = this.colour;
 		var polyOptions = {
 			strokeColor : colour,
-			strokeOpacity : 0.5,
-			strokeWeight : 12
+			strokeOpacity : 1,
+			strokeWeight : 6
 		};
 		var poly = new google.maps.Polyline(polyOptions);
 		poly.setMap(map);
