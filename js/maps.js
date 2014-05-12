@@ -526,6 +526,22 @@ function getStationsBetweenRoute(fromstation, tostation, route) {
 	return resstations;
 }
 
+function getDirectionStation(fromstation, tostation, route) {
+	var resstation;
+	var hit = false;
+	for (var i = $.inArray(fromstation, route.stations); i <= route.stations.length; i++) {
+		if (route.stations[i] == tostation) {
+			hit = true;
+			break;
+		}
+	}
+	if (hit)
+	resstation = route.stations[route.stations.length-1];
+	else
+	resstation = route.stations[0];
+	return resstation;
+}
+
 function getDirectRoute(fromstation, tostation) {
 
 	var directroute;
@@ -550,6 +566,8 @@ function drawroute(route) {
 	var path = poly.getPath();
 
 	var curr = 0;
+	var dirstation = getDirectionStation(route.stations[0],route.stations[route.stations.length-1],getRouteByName(route.stations[0].line)).name;
+			
 	$.each(route.stations, function() {
 		path.push(new google.maps.LatLng(this.lat, this.lon));
 		shortestpolypath.push(new google.maps.LatLng(this.lat, this.lon));
@@ -592,14 +610,14 @@ function drawroute(route) {
 			drawWalkingLine(stopmarker.position, new google.maps.LatLng(endstation.lat, endstation.lon));
 			if (this.name == startstation.name) {
 				iconimage = 'images/metrostart.png';
-				$('#route-list').append(startwalkingdirections + "<li data-icon='"+this.line+"' data-theme='a'><a href='#'>Start from: <br /> " + this.name + "<br />(" + this.line + " line)</a></li> ").listview('refresh');
-				$('#route-list').append("<li  data-icon='"+this.line+"' data-theme='a'  ><a href='#'>Pass " + stats + " stations <br />(" + this.line + " line)</a></li>").listview('refresh');
+				$('#route-list').append(startwalkingdirections + "<li data-icon='"+this.line+"' data-theme='a'><a href='#'>Start from: <br /> " + this.name + "<br />Direction: <br />  "+ dirstation+ " </a></li> ").listview('refresh');
+				$('#route-list').append("<li  data-icon='"+this.line+"' data-theme='a'  ><a href='#'>Pass " + stats + " stations</a></li>").listview('refresh');
 			} else if (this.name == endstation.name) {
 				iconimage = 'images/metrodest.png';
 				$('#route-list').append("<li data-icon='"+this.line+"'  data-theme='a' ><a href='#'>Stop at: <br />" + this.name + "</a></li>" + destwalkingdirections).listview('refresh');
 			} else if (curr == 0 && this.name != endstation.name && this.name != startstation.name) {
 				iconimage = 'images/metro.png';
-				$('#route-list').append("<li data-icon='"+this.line+"' data-theme='a' ><a href='#'>Change at: <br />" + this.name + " <br />(" + this.line + " line)</a></li>").listview('refresh');
+				$('#route-list').append("<li data-icon='"+this.line+"' data-theme='a' ><a href='#'>Change at: <br />" + this.name + " <br />Direction: <br />  "+ dirstation+ " </a></li>").listview('refresh');
 				$('#route-list').append("<li data-icon='"+this.line+"' data-theme='a'  ><a href='#'>Pass " + stats + " stations <br />(" + this.line + " line)</a></li>").listview('refresh');
 			}
 			if (startstation.name == endstation.name) {
